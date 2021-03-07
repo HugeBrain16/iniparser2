@@ -17,8 +17,8 @@ put another folder of this module into another directories
 
 ## Examples
 
-#### These examples is for getting the value from the properties
-
+**These examples below is for getting the value from the properties**
+</br>
 basic example
 
 `test.ini`:
@@ -41,13 +41,13 @@ print(data)
 {'name':'Mike Hawk'}
 ```
 
-**OR** With `stream` method
+**OR** With `temp` method
 
 `test.py`:
 ```py
-from iniparser2 import INI_STREAM
+from iniparser2 import INI_TEMP
 
-x = INI_STREAM()
+x = INI_TEMP()
 data = x.parse(
 """
 name=Mike Hawk
@@ -108,11 +108,11 @@ print(data)
 
 #### Output:
 ```py
-{"brief":"someone's identity"}
+{'brief': "someone's identity", 'id': {'name': 'Mike Hawk', 'age': '-69'}}
 ```
 
-#### These example is for properties stuff
-
+**These example below is for properties stuff**
+</br>
 basic example
 
 the `test.ini` file is empty

@@ -405,7 +405,7 @@ class INI:
 		else: return False
 
 class INI_TEMP:
-	"""temporary parse"""
+	"""temporary parse method"""
 	def __init__(self, tag=None, pass_tag=True, trace=False, trace_verbose=1):
 		self.tag = tag
 		self.pass_tag = pass_tag
