@@ -38,7 +38,7 @@ print(data)
 
 #### Output:
 ```py
-{'name':'Mike Hawk'}
+{'name': 'Mike Hawk'}
 ```
 
 **OR** With `temp` method
@@ -58,7 +58,7 @@ print(data)
 
 #### Output:
 ```py
-{'name':'Mike Hawk'}
+{'name': 'Mike Hawk'}
 ```
 
 **OR** With tag
@@ -82,7 +82,7 @@ print(data)
 
 #### Output:
 ```py
-{'name':'Mike Hawk','age':'-69'}
+{'name': 'Mike Hawk', 'age': '-69'}
 ```
 
 **pass_tag** argument
