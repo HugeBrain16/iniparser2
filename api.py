@@ -78,11 +78,31 @@ class INI:
 		elif self.pass_tag:
 			if self.trace_verbose >= 1: print(f'[iniparser2][TRACE]: parse mode = pass_tag:True')
 			with open(self.filename,'r') as f:
-				lines,ctr= f.readlines(),-1
+				lines,ctr,point,anchor,found,key= f.readlines(),-1,0,0,False,None
 				for l in lines: # get key and value
 					ctr += 1
-					if l.strip().startswith('['): break
-					else:
+					if l.strip().startswith('[') or found==True:
+						found=True
+						if len(l.strip().split('[')) == 2:
+							if l.strip().split('[')[1].split(']')[0]:
+								key = l.strip().split('[')[1].split(']')[0]
+								point,anchor,found = ctr+1,ctr+1,True
+								if self.trace_verbose >= 1: print(f'[iniparser2][TRACE]: Found `point` at line: {point}')
+								for i in range(point,len(lines)): # get anchor
+									anchor += 1
+									if len(lines[i].strip().split('[')) == 2:
+										if lines[i].strip().split('[')[1].split(']')[0]:
+											if self.trace_verbose >= 1: print(f'[iniparser2][TRACE]: Found `anchor` at line: {anchor}')
+											break
+								for i in range(point,anchor): # get key and value
+									if len(lines[i].strip().split('=')) == 2:
+										if self.trace_verbose == 2: print(f'[iniparser2][TRACE]: Found property at line: {i}')
+										if not key in ret:
+											ret.update({key:{}})
+											ret[key].update({lines[i].strip().split('=')[0]: lines[i].strip().split('=')[1]})
+										else:
+											ret[key].update({lines[i].strip().split('=')[0]: lines[i].strip().split('=')[1]})
+					if found == False:
 						if len(l.strip().split('=')) == 2:
 							if self.trace_verbose == 2: print(f'[iniparser2][TRACE]: Found property at line: {ctr}')
 							ret.update({l.strip().split('=')[0]: l.strip().split('=')[1]})
