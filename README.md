@@ -38,7 +38,7 @@ print(data)
 
 #### Output:
 ```py
-{'name':'Mike Hawk'}
+{'name': 'Mike Hawk'}
 ```
 
 **OR** With `stream` method
@@ -58,7 +58,7 @@ print(data)
 
 #### Output:
 ```py
-{'name':'Mike Hawk'}
+{'name': 'Mike Hawk'}
 ```
 
 **OR** With tag
@@ -82,7 +82,7 @@ print(data)
 
 #### Output:
 ```py
-{'name':'Mike Hawk','age':'-69'}
+{'name': 'Mike Hawk', 'age': '-69'}
 ```
 
 **pass_tag** argument
@@ -108,7 +108,7 @@ print(data)
 
 #### Output:
 ```py
-{"brief":"someone's identity"}
+{'brief': "someone's identity", 'id': {'name': 'Mike Hawk', 'age': '-69'}}
 ```
 
 #### These example is for properties stuff
