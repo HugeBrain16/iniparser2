@@ -1,6 +1,6 @@
 # Exceptions
 
-class TagError(Exception):
+class SectionError(Exception):
 	pass
 
 class TraceError(Exception):

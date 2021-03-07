@@ -61,7 +61,7 @@ print(data)
 {'name': 'Mike Hawk'}
 ```
 
-**OR** With tag
+**OR** With section
 
 `test.ini`:
 ```ini
@@ -74,7 +74,7 @@ age=-69
 ```py
 from iniparser2 import INI
 
-x = INI('test.ini','id') # 'id' is the tag name
+x = INI('test.ini','id') # 'id' is the section name
 data = x.get()
 
 print(data)
@@ -85,7 +85,7 @@ print(data)
 {'name': 'Mike Hawk', 'age': '-69'}
 ```
 
-**pass_tag** argument
+**pass_section** argument
 
 `test.ini`:
 ```ini
@@ -100,7 +100,7 @@ age=-69
 ```py
 from iniparser2 import INI
 
-x = INI('test.ini',pass_tag=True) # or you just don't have to put the tag name, it will override the `pass_tag` argument
+x = INI('test.ini',pass_section=True) # or you just don't have to put the section name, it will override the `pass_section` argument
 data = x.get()
 
 print(data)
