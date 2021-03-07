@@ -404,7 +404,8 @@ class INI:
 			return True
 		else: return False
 
-class INI_STREAM:
+class INI_TEMP:
+	"""temporary parse"""
 	def __init__(self, tag=None, pass_tag=True, trace=False, trace_verbose=1):
 		self.tag = tag
 		self.pass_tag = pass_tag
