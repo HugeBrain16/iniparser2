@@ -7,13 +7,14 @@ this module is the improved version of [**iniparser**](https://github.com/HugeBr
 ---
 
 # Quick Start
-how to import this module is by putting the module folder in the same directory as the main Python file to execute.
-</br>
 
-### For Example </br>
+## Installation
 
-this is your directory -> `./main.py`, then put the module folder in `./` <- here, or... you can put it in `.../Python3x/Lib/site-packages/` <- here, so you don't have to
-put another folder of this module into another directories
+to install the package see the following step below
+
+with pip: `pip install iniparser2`
+
+building the source code: `python setup.py install`
 
 ## Examples
 
