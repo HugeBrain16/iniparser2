@@ -56,24 +56,24 @@ class INI:
 				lines,ctr,point,anchor= f.readlines(),-1,0,0
 				for l in lines: # get point
 					ctr += 1
-					if len(l.strip().split('[')) == 2:
-						if l.strip().split('[')[1].split(']')[0] == self.section:
+					if len(l.strip().split('[',1)) == 2:
+						if l.strip().split('[',1)[1].split(']',1)[0] == self.section:
 							point,anchor,found = ctr+1,ctr+1,True
 							if self.trace_verbose >= 1: print(f'[iniparser2][TRACE]: Found `point` at line: {point}')
 							break
 				if point == 0 and self.trace_verbose == 1: print(f'[iniparser2][TRACE]: `point` found at line: {point} (DEFAULT)')
 				for i in range(point,len(lines)): # get anchor
 					anchor += 1
-					if len(lines[i].strip().split('[')) == 2:
-						if lines[i].strip().split('[')[1].split(']')[0]:
+					if len(lines[i].strip().split('[',1)) == 2:
+						if lines[i].strip().split('[',1)[1].split(']',1)[0]:
 							if self.trace_verbose >= 1: print(f'[iniparser2][TRACE]: Found `anchor` at line: {anchor}')
 							break
 				for i in range(point,anchor): # get key and value
 					if lines[i].strip().startswith('['): continue
 					else:
-						if len(lines[i].strip().split('=')) == 2:
+						if len(lines[i].strip().split('=',1)) == 2:
 							if self.trace_verbose == 2: print(f'[iniparser2][TRACE]: Found property at line: {i}')
-							ret.update({lines[i].strip().split('=')[0]: lines[i].strip().split('=')[1]})
+							ret.update({lines[i].strip().split('=',1)[0]: lines[i].strip().split('=',1)[1]})
 			if found: return ret
 		elif self.pass_section:
 			if self.trace_verbose >= 1: print(f'[iniparser2][TRACE]: parse mode = pass_section:True')
@@ -83,29 +83,29 @@ class INI:
 					ctr += 1
 					if l.strip().startswith('[') or found==True:
 						found=True
-						if len(l.strip().split('[')) == 2:
-							if l.strip().split('[')[1].split(']')[0]:
-								key = l.strip().split('[')[1].split(']')[0]
+						if len(l.strip().split('[',1)) == 2:
+							if l.strip().split('[',1)[1].split(']',1)[0]:
+								key = l.strip().split('[',1)[1].split(']',1)[0]
 								point,anchor,found = ctr+1,ctr+1,True
 								if self.trace_verbose >= 1: print(f'[iniparser2][TRACE]: Found `point` at line: {point}')
 								for i in range(point,len(lines)): # get anchor
 									anchor += 1
-									if len(lines[i].strip().split('[')) == 2:
-										if lines[i].strip().split('[')[1].split(']')[0]:
+									if len(lines[i].strip().split('[',1)) == 2:
+										if lines[i].strip().split('[',1)[1].split(']',1)[0]:
 											if self.trace_verbose >= 1: print(f'[iniparser2][TRACE]: Found `anchor` at line: {anchor}')
 											break
 								for i in range(point,anchor): # get key and value
-									if len(lines[i].strip().split('=')) == 2:
+									if len(lines[i].strip().split('=',1)) == 2:
 										if self.trace_verbose == 2: print(f'[iniparser2][TRACE]: Found property at line: {i}')
 										if not key in ret:
 											ret.update({key:{}})
-											ret[key].update({lines[i].strip().split('=')[0]: lines[i].strip().split('=')[1]})
+											ret[key].update({lines[i].strip().split('=',1)[0]: lines[i].strip().split('=',1)[1]})
 										else:
-											ret[key].update({lines[i].strip().split('=')[0]: lines[i].strip().split('=')[1]})
+											ret[key].update({lines[i].strip().split('=',1)[0]: lines[i].strip().split('=',1)[1]})
 					if found == False:
-						if len(l.strip().split('=')) == 2:
+						if len(l.strip().split('=',1)) == 2:
 							if self.trace_verbose == 2: print(f'[iniparser2][TRACE]: Found property at line: {ctr}')
-							ret.update({l.strip().split('=')[0]: l.strip().split('=')[1]})
+							ret.update({l.strip().split('=',1)[0]: l.strip().split('=',1)[1]})
 			return ret
 
 	def set_section(self):
@@ -115,8 +115,8 @@ class INI:
 			with open(self.filename,'r') as f:
 				lines,found= f.readlines(),False
 				for l in lines: # get point
-					if len(l.strip().split('[')) == 2:
-						if l.strip().split('[')[1].split(']')[0] == self.section:
+					if len(l.strip().split('[',1)) == 2:
+						if l.strip().split('[',1)[1].split(']',1)[0] == self.section:
 							found = True
 							if self.trace_verbose >= 1: print(f'[iniparser2][TRACE]: Couldn\'t set section for `{self.section}`, section already exists!')
 							return False
@@ -148,8 +148,8 @@ class INI:
 					lines=f.readlines()
 					for l in lines: # get point
 						ctr += 1
-						if len(l.strip().split('[')) == 2:
-							if l.strip().split('[')[1].split(']')[0] == self.section:
+						if len(l.strip().split('[',1)) == 2:
+							if l.strip().split('[',1)[1].split(']',1)[0] == self.section:
 								found = True
 								if self.trace_verbose >= 1: print(f'[iniparser2][TRACE]: section found at line: {ctr}')
 								break
@@ -170,8 +170,8 @@ class INI:
 			with open(self.filename,'r') as f:
 				lines,found,ctr= f.readlines(),False,-1
 				for l in lines: # get point
-					if len(l.strip().split('[')) == 2:
-						if l.strip().split('[')[1].split(']')[0] == self.section:
+					if len(l.strip().split('[',1)) == 2:
+						if l.strip().split('[',1)[1].split(']',1)[0] == self.section:
 							if self.trace_verbose >= 1: print(f'[iniparser2][TRACE]: section found at line: {ctr}')
 							found = True
 				return found
@@ -195,8 +195,8 @@ class INI:
 				lines=f.readlines()
 				for l in lines:
 					ctr += 1
-					if len(l.strip().split('=')) == 2:
-						if l.strip().split('=')[0] == key:
+					if len(l.strip().split('=',1)) == 2:
+						if l.strip().split('=',1)[0] == key:
 							if self.trace_verbose >= 1: print(f'[iniparser2][TRACE]: an existing property found at line: {ctr}')
 							found = True
 							break
@@ -221,21 +221,21 @@ class INI:
 				lines,ctr,point,anchor,found,section_point= f.readlines(),-1,0,0,False,0
 				for l in lines: # get point
 					ctr += 1
-					if len(l.strip().split('[')) == 2:
-						if l.strip().split('[')[1].split(']')[0] == self.section:
+					if len(l.strip().split('[',1)) == 2:
+						if l.strip().split('[',1)[1].split(']',1)[0] == self.section:
 							point,anchor,section_point= ctr+1,ctr+1,ctr
 							if self.trace_verbose >= 1: print(f'[iniparser2][TRACE]: found section point at line: {ctr}')
 							break
 				for i in range(point,len(lines)): # get anchor
 					anchor += 1
-					if len(lines[i].strip().split('[')) == 2:
-						if lines[i].strip().split('[')[1].split(']')[0]:
+					if len(lines[i].strip().split('[',1)) == 2:
+						if lines[i].strip().split('[',1)[1].split(']',1)[0]:
 							if self.trace_verbose >= 1: print(f'[iniparser2][TRACE]: found section anchor at line: {anchor}')
 							break
 				for i in range(point,anchor): # get section pointer
 					section_point += 1
-					if not lines[i].strip().startswith('[') and len(lines[i].strip().split('=')) == 2:
-						if lines[i].strip().split('=')[0] == key:
+					if not lines[i].strip().startswith('[') and len(lines[i].strip().split('=',1)) == 2:
+						if lines[i].strip().split('=',1)[0] == key:
 							if self.trace_verbose >= 1: print(f'[iniparser2][TRACE]: found property at line: {i}')
 							found = True
 							break
@@ -268,8 +268,8 @@ class INI:
 			with open(self.filename,'r') as f:
 				lines=f.readlines()
 				for l in lines:
-					if len(l.strip().split('=')) == 2:
-						if l.strip().split('=')[0] == key:
+					if len(l.strip().split('=',1)) == 2:
+						if l.strip().split('=',1)[0] == key:
 							found = True
 							break
 			return found
@@ -280,20 +280,20 @@ class INI:
 				lines,ctr,point,anchor,found= f.readlines(),-1,0,0,False
 				for l in lines: # get point
 					ctr += 1
-					if len(l.strip().split('[')) == 2:
-						if l.strip().split('[')[1].split(']')[0] == self.section:
+					if len(l.strip().split('[',1)) == 2:
+						if l.strip().split('[',1)[1].split(']',1)[0] == self.section:
 							point,anchor= ctr+1,ctr+1
 							if self.trace_verbose >= 1: print(f'[iniparser2][TRACE]: section point found at line: {point}')
 							break
 				for i in range(point,len(lines)): # get anchor
 					anchor += 1
-					if len(lines[i].strip().split('[')) == 2:
-						if lines[i].strip().split('[')[1].split(']')[0]:
+					if len(lines[i].strip().split('[',1)) == 2:
+						if lines[i].strip().split('[',1)[1].split(']',1)[0]:
 							if self.trace_verbose >= 1: print(f'[iniparser2][TRACE]: section anchor found at line: {anchor}')
 							break
 				for i in range(point,anchor): # get section pointer
-					if not lines[i].strip().startswith('[') and len(lines[i].strip().split('=')) == 2:
-						if lines[i].strip().split('=')[0] == key:
+					if not lines[i].strip().startswith('[') and len(lines[i].strip().split('=',1)) == 2:
+						if lines[i].strip().split('=',1)[0] == key:
 							found = True
 							break
 			return found
@@ -313,8 +313,8 @@ class INI:
 				lines=f.readlines()
 				for l in lines:
 					ctr += 1
-					if len(l.strip().split('=')) == 2:
-						if l.strip().split('=')[0] == key:
+					if len(l.strip().split('=',1)) == 2:
+						if l.strip().split('=',1)[0] == key:
 							found = True
 							if self.trace_verbose >= 1: print(f'[iniparser2][TRACE]: found property at line: {ctr}')
 							break
@@ -333,21 +333,21 @@ class INI:
 				lines,ctr,point,anchor,found,section_point= f.readlines(),-1,0,0,False,0
 				for l in lines: # get point
 					ctr += 1
-					if len(l.strip().split('[')) == 2:
-						if l.strip().split('[')[1].split(']')[0] == self.section:
+					if len(l.strip().split('[',1)) == 2:
+						if l.strip().split('[',1)[1].split(']',1)[0] == self.section:
 							point,anchor,section_point= ctr+1,ctr+1,ctr
 							if self.trace_verbose >= 1: print(f'[iniparser2][TRACE]: section point found at line: {point}')
 							break
 				for i in range(point,len(lines)): # get anchor
 					anchor += 1
-					if len(lines[i].strip().split('[')) == 2:
-						if lines[i].strip().split('[')[1].split(']')[0]:
+					if len(lines[i].strip().split('[',1)) == 2:
+						if lines[i].strip().split('[',1)[1].split(']',1)[0]:
 							if self.trace_verbose >= 1: print(f'[iniparser2][TRACE]: section anchor found at line: {anchor}')
 							break
 				for i in range(point,anchor): # get section pointer
 					section_point += 1
-					if not lines[i].strip().startswith('[') and len(lines[i].strip().split('=')) == 2:
-						if lines[i].strip().split('=')[0] == key:
+					if not lines[i].strip().startswith('[') and len(lines[i].strip().split('=',1)) == 2:
+						if lines[i].strip().split('=',1)[0] == key:
 							found = True
 							break
 			if found:
