@@ -14,9 +14,7 @@ this module is the improved version of [**iniparser**](https://github.com/HugeBr
 
 to install the package see the following step below
 
-with pip: `pip install iniparser2`
-
-building the source code: `python setup.py install`
+from source: `python setup.py install` | `python setup.py install --user`
 
 ## Examples
 
