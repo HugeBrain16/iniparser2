@@ -4,7 +4,7 @@
 
 An INI parser or a Config parser.
 
-this module is the improved version of [**iniparser**](https://github.com/HugeBrain16/iniparser) with more features.
+this package is the improved version of [**iniparser**](https://github.com/HugeBrain16/iniparser) with more features.
 
 ---
 
