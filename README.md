@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.com/HugeBrain16/iniparser2.svg?branch=main)](https://travis-ci.com/HugeBrain16/iniparser2)
 
-An INI parser or maybe a Config parser.
+An INI parser or a Config parser.
 
 this module is the improved version of [**iniparser**](https://github.com/HugeBrain16/iniparser) with more features.
 
