@@ -1,6 +1,6 @@
 # iniparser2
 
-[![Build Status](https://travis-ci.com/HugeBrain16/iniparser2.svg?branch=main)](https://travis-ci.com/HugeBrain16/iniparser2)
+[![Build Status](https://travis-ci.com/HugeBrain16/iniparser2.svg?branch=main)](https://travis-ci.com/HugeBrain16/iniparser2) [![codecov](https://codecov.io/gh/HugeBrain16/iniparser2/branch/main/graph/badge.svg?token=I9CLDZCMC6)](https://codecov.io/gh/HugeBrain16/iniparser2)
 
 An INI parser or a Config parser.
 
