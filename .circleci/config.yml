@@ -12,7 +12,7 @@ jobs:
       - python/install-deps
       - python/save-cache
       - run:
-          command: ./test_parse.py test
+          command: chmod +x ./test_parse.py && ./test_parse.py test
           name: Test
 
 workflows:
