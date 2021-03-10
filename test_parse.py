@@ -5,38 +5,54 @@ def test_main():
 	x = INI('data.ini')
 	assert x.filename == 'data.ini'
 
-def test_temp():
-	tmp = INI_TEMP()
-	data = tmp.parse("""
-	temp=IxHdgTszZ1oz
+def test_pass_section_x():
+	x = INI('data.ini','main')
+	assert x.pass_section == False
 
-	[main]
-	data=400
-	""")
+def test_pass_section_y():
+	x = INI('data.ini')
+	assert x.pass_section == True
 
-	assert data == {'temp': 'IxHdgTszZ1oz', 'main': {'data': '400'}}
+def test_trace_x():
+	x = INI('data.ini',trace_verbose=2)
+	assert x.trace == False
 
-def test_parse():
+def test_parse_no_section():
 	file="""
-	; no section here
-	brief=test parse
-	#nothing=yes
-	comment_me=yes # ok
+	name=ok
+	"""
+	x = INI_TEMP()
+	data = x.parse(file)
+	assert data['name'] == 'ok'
 
-	[main]
-	; a random comment
-	data=400=500
-	string="Hello"
-	something="hi hi'hello"
-	comment_here=again? # haha
+def test_parse_section():
+	file="""
+	name=ok
 
-	[[section]]
-	; another random comment
-	prop=nothing
-	#e=haha
+	#[data]
+	ok=yes
+	"""
+	x = INI_TEMP()
+	data = x.parse(file)
+	assert data['ok'] == 'yes'
+
+def test_parse_comment():
+	file="""
+	name=ok
+	#age=no
 	"""
 
-	tmp = INI_TEMP()
-	data = tmp.parse(file)
+	x = INI_TEMP()
+	data = x.parse(file)
+	assert (not 'age' in data) == True
 
-	assert data == {'brief': 'test parse', 'comment_me': 'yes ', 'main': {'data': '400=500', 'string': '"Hello"', 'something': '"hi hi\'hello"', 'comment_here': 'again? '}, '[section': {'prop': 'nothing'}}
+def test_parse_comment_sc():
+	file="""
+	; test semicolon comment
+	name=ok
+	;age=np
+	"""
+
+	x = INI_TEMP()
+	data = x.parse(file)
+	assert (not 'age' in data or not ';age' in data) == True
