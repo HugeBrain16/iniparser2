@@ -9,5 +9,6 @@ install:
   - pip install -U codecov
 script:
   - pytest
+  - coverage run test_parse.py
 after_success:
   - codecov
