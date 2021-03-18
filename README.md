@@ -42,6 +42,25 @@ print(data)
 {'name': 'Mike Hawk'}
 ```
 
+using `with` keyword  
+
+`test.ini`:
+```ini
+name=Mike Hawk
+```
+  
+`test.py`:  
+```py
+from iniparser2 import INI
+
+with INI('test.ini') as i:
+    print(i.get())
+```
+#### Output:
+```py
+{'name': 'Mike Hawk'}
+```
+  
 **OR** With `temp` method
 
 `test.py`:

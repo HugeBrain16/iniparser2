@@ -33,6 +33,12 @@ class INI:
 			self.trace_verbose=0
 		if self.section != None: self.section = str(section)
 
+	def __enter__(self):
+		return INI(self.filename, self.section, self.pass_section, self.trace, self.trace_verbose)
+
+	def __exit__(*args,**kwargs):
+		pass
+
 	def delete_gap(self):
 		lines,spc_ctr=list(),-1
 		with open(self.filename,'r') as f:
@@ -428,6 +434,12 @@ class INI_TEMP:
 		elif self.trace == False and trace_verbose > 0:
 			self.trace_verbose=0
 		if self.section != None: self.section = str(section)
+
+	def __enter__(self):
+		return INI_TEMP(self.section,self.pass_section,self.trace,self.trace_verbose)
+
+	def __exit__(*args,**kwargs):
+		pass
 
 	def parse(self,string):
 		import random
