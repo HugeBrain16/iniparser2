@@ -264,6 +264,13 @@ class INI:
 						f.write(l)
 					return True
 
+	def sets(self,sets):
+		"""set or update properties with sets or dictionary"""
+		for ns in sets:
+			if isinstance(sets[ns], dict) or isinstance(sets[ns], list): continue
+			else:
+				INI(self.filename,self.section).set(ns,sets[ns])
+
 	def isset(self,key):
 		"""
 			check if key was set or not
@@ -460,15 +467,3 @@ class INI_TEMP:
 		data = x.get()
 		x.remove()
 		return data
-
-def dump(filename,set):
-	"""dump a dictionary or a set to INI file format"""
-	with open(filename,'a+') as f:
-		for ns in set:
-			if isinstance(set[ns], dict):
-				f.write(f'[{ns}]\r')
-				for ps in set[ns]:
-					if isinstance(set[ns][ps], dict): continue
-					f.write(f'{ps}={set[ns][ps]}\r')
-			else:
-				f.write(f"{ns}={set[ns]}\r")
