@@ -19,7 +19,6 @@ class INI:
 		self.trace = trace
 		self.trace_verbose = trace_verbose
 
-	def __enter__(self):
 		if self.section != None:
 			self.pass_section = False
 		if self.pass_section == False and self.section == None:
@@ -35,6 +34,7 @@ class INI:
 			self.trace_verbose=0
 		if self.section != None: self.section = str(section)
 
+	def __enter__(self):
 		return INI(self.filename, self.section, self.pass_section, self.trace, self.trace_verbose)
 
 	def __exit__(*args,**kwargs):
@@ -422,7 +422,6 @@ class INI_TEMP:
 		self.trace = trace
 		self.trace_verbose = trace_verbose
 
-	def __enter__(self):
 		if self.section != None:
 			self.pass_section = False
 		if self.pass_section == False and self.section == None:
@@ -437,7 +436,8 @@ class INI_TEMP:
 		elif self.trace == False and trace_verbose > 0:
 			self.trace_verbose=0
 		if self.section != None: self.section = str(section)
-		
+
+	def __enter__(self):
 		return INI_TEMP(self.section,self.pass_section,self.trace,self.trace_verbose)
 
 	def __exit__(*args,**kwargs):
