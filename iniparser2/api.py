@@ -18,6 +18,8 @@ class INI:
 		self.pass_section = pass_section
 		self.trace = trace
 		self.trace_verbose = trace_verbose
+
+	def __enter__(self):
 		if self.section != None:
 			self.pass_section = False
 		if self.pass_section == False and self.section == None:
@@ -33,7 +35,6 @@ class INI:
 			self.trace_verbose=0
 		if self.section != None: self.section = str(section)
 
-	def __enter__(self):
 		return INI(self.filename, self.section, self.pass_section, self.trace, self.trace_verbose)
 
 	def __exit__(*args,**kwargs):
@@ -420,6 +421,8 @@ class INI_TEMP:
 		self.pass_section = pass_section
 		self.trace = trace
 		self.trace_verbose = trace_verbose
+
+	def __enter__(self):
 		if self.section != None:
 			self.pass_section = False
 		if self.pass_section == False and self.section == None:
@@ -434,8 +437,7 @@ class INI_TEMP:
 		elif self.trace == False and trace_verbose > 0:
 			self.trace_verbose=0
 		if self.section != None: self.section = str(section)
-
-	def __enter__(self):
+		
 		return INI_TEMP(self.section,self.pass_section,self.trace,self.trace_verbose)
 
 	def __exit__(*args,**kwargs):
@@ -458,3 +460,15 @@ class INI_TEMP:
 		data = x.get()
 		x.remove()
 		return data
+
+def dump(filename,set):
+	"""dump a dictionary or a set to INI file format"""
+	with open(filename,'a+') as f:
+		for ns in set:
+			if isinstance(set[ns], dict):
+				f.write(f'[{ns}]\r')
+				for ps in set[ns]:
+					if isinstance(set[ns][ps], dict): continue
+					f.write(f'{ps}={set[ns][ps]}\r')
+			else:
+				f.write(f"{ns}={set[ns]}\r")

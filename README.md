@@ -1,8 +1,8 @@
 # iniparser2
 
-[![Build Status](https://travis-ci.com/HugeBrain16/iniparser2.svg?branch=main)](https://travis-ci.com/HugeBrain16/iniparser2) [![codecov](https://codecov.io/gh/HugeBrain16/iniparser2/branch/main/graph/badge.svg?token=I9CLDZCMC6)](https://codecov.io/gh/HugeBrain16/iniparser2) [![Maintainability](https://api.codeclimate.com/v1/badges/974c04edc6eb40e4ceb0/maintainability)](https://codeclimate.com/github/HugeBrain16/iniparser2/maintainability) [![contributions welcome](https://img.shields.io/badge/contributions-welcome-brightgreen.svg?style=flat)](https://github.com/dwyl/esta/issues)
+[![Build Status](https://travis-ci.com/HugeBrain16/iniparser2.svg?branch=main)](https://travis-ci.com/HugeBrain16/iniparser2)  
 
-An INI parser or a Config parser.
+**iniparser2** is An INI parser or a Config parser.  
 
 this package is the improved version of [**iniparser**](https://github.com/HugeBrain16/iniparser) with more features.
 
@@ -14,7 +14,7 @@ this package is the improved version of [**iniparser**](https://github.com/HugeB
 
 to install the package see the following step below
 
-from source: `python setup.py install` | `python setup.py install --user`
+from source: `python setup.py install`  
 
 ## Examples
 
