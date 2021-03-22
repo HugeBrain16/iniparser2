@@ -102,6 +102,17 @@ class INI:
 							ret.update({l.strip().split('=',1)[0]: l.strip().split('=',1)[1].split('#')[0]})
 			return ret
 
+	def sections(self):
+		"""get sections"""
+		ret, found = list(), False
+		with open(self.filename,'r') as f:
+			lines=f.readlines()
+			for l in lines:
+				if not l.strip().startswith(('#',';')) and len(l.strip().split('[',1)) == 2:
+					if l.strip().split('[',1)[1].split(']',1)[0]: ret.append(l.strip().split('[',1)[1].split(']',1)[0]); found=True
+
+		if found: return ret
+
 	def set_section(self):
 		"""set section"""
 		if not self.pass_section:
