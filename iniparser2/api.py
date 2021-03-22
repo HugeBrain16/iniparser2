@@ -1,19 +1,6 @@
 class INI:
 	def __init__(self, filename, section=None, pass_section=True, trace=False, trace_verbose=1):
-		'''
-			Parameters:
-				- filename:
-					the name of file to be parsed
-				- section:
-					the section of the properties
-				- pass_section:
-					pass section
-				- trace:
-					print trace messages
-				- trace_verbose:
-					trace verbosity level
-		'''
-		self.filename = filename
+		self.filename = str(filename)
 		self.section = section
 		self.pass_section = pass_section
 		self.trace = trace
@@ -186,15 +173,8 @@ class INI:
 			if self.trace_verbose >= 1: print(f'[iniparser2][TRACE]: Couldn\'t check section, pass_section:True')
 
 	def set(self,key,value):
-		"""
-			set new key or update existing key
-
-			Parameters:
-				- key:
-					key of the property
-				- value:
-					value of the property
-		"""
+		"""set new property or update existing property"""
+		key = str(key)
 		if self.pass_section:
 			if self.trace_verbose >= 1: print(f'[iniparser2][TRACE]: parse mode = pass_section:True')
 			lines,ctr,found=list(),-1,False
@@ -272,13 +252,8 @@ class INI:
 				INI(self.filename,self.section).set(ns,sets[ns])
 
 	def isset(self,key):
-		"""
-			check if key was set or not
-			
-			Parameters:
-				- key:
-					key of the property
-		"""
+		"""check if property was set or not"""
+		key = str(key)
 		if self.pass_section:
 			if self.trace_verbose >= 1: print(f'[iniparser2][TRACE]: parse mode = pass_section:True')
 			found=False
@@ -316,13 +291,8 @@ class INI:
 			return found
 
 	def unset(self,key):
-		"""
-			unset existing key
-
-			Parameters:
-				- key:
-					key of the property
-		"""
+		"""unset existing property by key"""
+		key = str(key)
 		if self.pass_section:
 			if self.trace_verbose >= 1: print(f'[iniparser2][TRACE]: parse mode = pass_section:True')
 			lines,ctr,found=list(),-1,False
@@ -393,13 +363,7 @@ class INI:
 		else: return False
 
 	def flush(self,stream=False):
-		"""
-			flush file
-			
-			Parameters:
-				- stream:
-					flush mode
-		"""
+		"""flush file"""
 		if not stream:
 			import os
 			if os.path.exists(self.filename):
