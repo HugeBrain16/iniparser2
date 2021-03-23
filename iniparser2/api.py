@@ -75,6 +75,7 @@ class INI:
 										if lines[i].strip().split('[',1)[1].split(']',1)[0]:
 											if self.trace_verbose >= 1: print(f'[iniparser2][TRACE]: Found `anchor` at line: {anchor}')
 											break
+								ret.update({key:{}})
 								for i in range(point,anchor): # get key and value
 									if not lines[i].strip().startswith(('#',';')) and len(lines[i].strip().split('=',1)) == 2:
 										if self.trace_verbose == 2: print(f'[iniparser2][TRACE]: Found property at line: {i}')
