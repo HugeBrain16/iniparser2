@@ -103,7 +103,7 @@ class INI:
 		if not self.pass_section:
 			if self.trace_verbose >= 1: print(f'[iniparser2][TRACE]: parse mode = pass_section:False')
 			if not INI(self.filename,self.section).isset_section():
-				data = INI(self.filename,self.section).get()
+				data = INI(self.filename).get()
 				if data == None: data = dict()
 				data.update({self.section: {}})
 				from .utils import dump; dump(self.filename,data)
@@ -115,17 +115,16 @@ class INI:
 		if not self.pass_section:
 			if self.trace_verbose >= 1: print(f'[iniparser2][TRACE]: parse mode = pass_section:False')
 			if INI(self.filename,self.section).isset_section():
-				data = INI(self.filename,self.section).get()
-				if isinstance(data[self.section], dict): del data[self.section]; return True
+				data = INI(self.filename).get()
+				if isinstance(data[self.section], dict): del data[self.section]; from .utils import dump; dump(self.filename,data); return True
 				else: return False	
 		elif self.pass_section: 
 			if self.trace_verbose >= 1: print(f'[iniparser2][TRACE]: Couldn\'t unset section, pass_section:True')
 			
-
 	def isset_section(self):
 		"""check if section was set or not"""
 		if not self.pass_section:
-			data = INI(self.filename,self.section).get()
+			data = INI(self.filename).get()
 			if data == None: return False
 			if self.section in data:
 				if isinstance(data[self.section],dict): return True
@@ -139,20 +138,19 @@ class INI:
 		key = str(key)
 		if self.pass_section:
 			if self.trace_verbose >= 1: print(f'[iniparser2][TRACE]: parse mode = pass_section:True')
-			data = INI(self.filename,self.section).get()
+			data = INI(self.filename).get()
 			if data == None: data = dict()
 			data[key] = value
 			from .utils import dump; dump(self.filename,data)
 			return True
 		elif not self.pass_section:
 			if self.trace_verbose >= 1: print(f'[iniparser2][TRACE]: parse mode = pass_section:False')
-			data = INI(self.filename,self.section).get()
+			data = INI(self.filename).get()
 			if data == None: data = dict()
 			try:
 				data[self.section][key] = value
 			except KeyError:
-				from .err import SectionError
-				raise SectionError('No section found for %s' % self.section)
+				data[self.section].update({key: value})
 			from .utils import dump; dump(self.filename,data)
 			return True
 
@@ -167,14 +165,14 @@ class INI:
 		"""check if property was set or not"""
 		key = str(key)
 		if self.pass_section:
-			data = INI(self.filename,self.section).get()
+			data = INI(self.filename).get()
 			if data == None: return False
 			if key in data:
 				if not isinstance(data[key], dict): return True
 				else: return False
 			else: return False
 		elif not self.pass_section:
-			data = INI(self.filename,self.section).get()
+			data = INI(self.filename).get()
 			if data == None: return False
 			if key in data:
 				if INI(self.filename,self.section).isset_section():
@@ -189,19 +187,17 @@ class INI:
 		if self.pass_section:
 			if self.trace_verbose >= 1: print(f'[iniparser2][TRACE]: parse mode = pass_section:True')
 			if not INI(self.filename,self.section).isset(key): return False
-			data = INI(self.filename,self.section).get(); del data[key]
+			data = INI(self.filename).get(); del data[key]
 			from .utils import dump; dump(self.filename,data)
 			return True
 
 		elif not self.pass_section:
 			if self.trace_verbose >= 1: print(f'[iniparser2][TRACE]: parse mode = pass_section:False')
 			if not INI(self.filename,self.section).isset(key): return False
-			data = INI(self.filename,self.section).get(); del data[self.section][key]
+			data = INI(self.filename).get(); del data[self.section][key]
 			from .utils import dump; dump(self.filename,data)
 			return True
-
-	# utils
-
+			
 	def exists(self):
 		"""check whether the file is exists or not"""
 		import os
