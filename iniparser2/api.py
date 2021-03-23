@@ -140,8 +140,18 @@ class INI:
 			if self.trace_verbose >= 1: print(f'[iniparser2][TRACE]: parse mode = pass_section:True')
 			data = INI(self.filename).get()
 			if data == None: data = dict()
-			data[key] = value
-			from .utils import dump; dump(self.filename,data)
+			if key in data and not isinstance(data[key], dict):
+				data[key] = value
+				from .utils import dump; dump(self.filename,data)
+			else:
+				lines = list()
+				with open(self.filename,'r') as f:
+					lines = f.readlines()
+					print(lines)
+					lines.insert(0,f"{key}={value}\n")
+				with open(self.filename,'w') as f:
+					for l in lines:
+						f.write(l)
 			return True
 		elif not self.pass_section:
 			if self.trace_verbose >= 1: print(f'[iniparser2][TRACE]: parse mode = pass_section:False')
