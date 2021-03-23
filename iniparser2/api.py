@@ -27,19 +27,6 @@ class INI:
 	def __exit__(*args,**kwargs):
 		pass
 
-	def delete_gap(self):
-		lines,spc_ctr=list(),-1
-		with open(self.filename,'r') as f:
-			lines,spc_ctr,spcb_ctr=f.readlines(),-1,0
-			for l in lines: # get spaces by line
-				spc_ctr += 1
-				if l.strip() == '':
-					if self.trace_verbose == 2: print(f'[iniparser2][TRACE]: found gap at line: {spc_ctr}')
-					lines[spc_ctr] = ''
-		with open(self.filename,'w+') as f:
-			for l in lines:
-				f.write(l)
-
 	def get(self):
 		"""get all keys and value by section"""
 		ret = dict()
@@ -104,37 +91,21 @@ class INI:
 
 	def sections(self):
 		"""get sections"""
-		ret, found = list(), False
-		with open(self.filename,'r') as f:
-			lines=f.readlines()
-			for l in lines:
-				if not l.strip().startswith(('#',';')) and len(l.strip().split('[',1)) == 2:
-					if l.strip().split('[',1)[1].split(']',1)[0]: ret.append(l.strip().split('[',1)[1].split(']',1)[0]); found=True
-
-		if found: return ret
+		sec = list()
+		data = INI(self.filename, self.section).get()
+		if data == None: return data
+		for d in data:
+			if isinstance(data[d], dict): sec.append(d)
 
 	def set_section(self):
 		"""set section"""
 		if not self.pass_section:
 			if self.trace_verbose >= 1: print(f'[iniparser2][TRACE]: parse mode = pass_section:False')
-			with open(self.filename,'r') as f:
-				lines,found= f.readlines(),False
-				for l in lines: # get point
-					if not l.strip().startswith(('#',';')) and len(l.strip().split('[',1)) == 2:
-						if l.strip().split('[',1)[1].split(']',1)[0] == self.section:
-							found = True
-							if self.trace_verbose >= 1: print(f'[iniparser2][TRACE]: Couldn\'t set section for `{self.section}`, section already exists!')
-							return False
-			if not found:
-				lines=list()
-				with open(self.filename,'r') as f:
-					lines=f.readlines()
-				with open(self.filename,'a+') as f:
-					if len(lines) > 0:
-						f.write(f'\n[{self.section}]\r')
-					else: f.write(f'\n[{self.section}]\r')
-					INI(self.filename,self.section).delete_gap()
-					return True
+			if not INI(self.filename,self.section).isset_section():
+				data = INI(self.filename,self.section).get()
+				if data == None: data = dict()
+				data.update({self.section: {}})
+				from .utils import dump; dump(self.filename,data)
 		elif self.pass_section:
 			if self.trace_verbose >= 1: print(f'[iniparser2][TRACE]: Couldn\'t set section, pass_section:True')
 
@@ -143,27 +114,9 @@ class INI:
 		if not self.pass_section:
 			if self.trace_verbose >= 1: print(f'[iniparser2][TRACE]: parse mode = pass_section:False')
 			if INI(self.filename,self.section).isset_section():
-				ctr = -1
-				for k in INI(self.filename,self.section).get(): # clear keys inside the section
-					ctr += 1
-					if self.trace_verbose == 2: print(f'[iniparser2][TRACE]: Unset property of section {self.section}: {k} line({ctr})')
-					INI(self.filename,self.section).unset(k)
-				lines,ctr,found= list(),-1,False
-				with open(self.filename,'r') as f:
-					lines=f.readlines()
-					for l in lines: # get point
-						ctr += 1
-						if not l.strip().startswith(('#',';')) and len(l.strip().split('[',1)) == 2:
-							if l.strip().split('[',1)[1].split(']',1)[0] == self.section:
-								found = True
-								if self.trace_verbose >= 1: print(f'[iniparser2][TRACE]: section found at line: {ctr}')
-								break
-				del lines[ctr] # delete section
-				with open(self.filename,'w+') as f:
-					for l in lines:
-						f.write(l)
-				INI(self.filename,self.section).delete_gap()
-				return found
+				data = INI(self.filename,self.section).get()
+				if isinstance(data[self.section], dict): del data[self.section]; return True
+				else: return False	
 		elif self.pass_section: 
 			if self.trace_verbose >= 1: print(f'[iniparser2][TRACE]: Couldn\'t unset section, pass_section:True')
 			
@@ -171,15 +124,12 @@ class INI:
 	def isset_section(self):
 		"""check if section was set or not"""
 		if not self.pass_section:
-			if self.trace_verbose >= 1: print(f'[iniparser2][TRACE]: parse mode = pass_section:False')
-			with open(self.filename,'r') as f:
-				lines,found,ctr= f.readlines(),False,-1
-				for l in lines: # get point
-					if not l.strip().startswith(('#',';')) and len(l.strip().split('[',1)) == 2:
-						if l.strip().split('[',1)[1].split(']',1)[0] == self.section:
-							if self.trace_verbose >= 1: print(f'[iniparser2][TRACE]: section found at line: {ctr}')
-							found = True
-				return found
+			data = INI(self.filename,self.section).get()
+			if data == None: return False
+			if self.section in data:
+				if isinstance(data[self.section],dict): return True
+				else: return False
+			else: return False
 		elif self.pass_section: 
 			if self.trace_verbose >= 1: print(f'[iniparser2][TRACE]: Couldn\'t check section, pass_section:True')
 
@@ -188,72 +138,22 @@ class INI:
 		key = str(key)
 		if self.pass_section:
 			if self.trace_verbose >= 1: print(f'[iniparser2][TRACE]: parse mode = pass_section:True')
-			lines,ctr,found=list(),-1,False
-			with open(self.filename,'r') as f:
-				lines=f.readlines()
-				for l in lines:
-					ctr += 1
-					if not l.strip().startswith(('#',';')) and len(l.strip().split('=',1)) == 2:
-						if l.strip().split('=',1)[0] == key:
-							if self.trace_verbose >= 1: print(f'[iniparser2][TRACE]: an existing property found at line: {ctr}')
-							found = True
-							break
-			if found: # update existing key's value
-				if self.trace_verbose >= 1: print(f'[iniparser2][TRACE]: found an existing property, update property value at line: {ctr}')
-				lines[ctr] = f"{key}={value}\r"
-				with open(self.filename,'w+') as f:
-					for l in lines:
-						f.write(l)
-					return True
-			elif not found: # new key
-				if self.trace_verbose >= 1: print(f'[iniparser2][TRACE]: property not found, set new key at line: 0')
-				lines.insert(0,f"{key}={value}\r")
-				with open(self.filename,'w+') as f:
-					for l in lines:
-						f.write(l)
-					return True
+			data = INI(self.filename,self.section).get()
+			if data == None: data = dict()
+			data[key] = value
+			from .utils import dump; dump(self.filename,data)
+			return True
 		elif not self.pass_section:
 			if self.trace_verbose >= 1: print(f'[iniparser2][TRACE]: parse mode = pass_section:False')
-			lines,section_point,found=list(),0,False
-			with open(self.filename,'r') as f:
-				lines,ctr,point,anchor,found,section_point= f.readlines(),-1,0,0,False,0
-				for l in lines: # get point
-					ctr += 1
-					if not l.strip().startswith(('#',';')) and len(l.strip().split('[',1)) == 2:
-						if l.strip().split('[',1)[1].split(']',1)[0] == self.section:
-							point,anchor,section_point= ctr+1,ctr+1,ctr
-							if self.trace_verbose >= 1: print(f'[iniparser2][TRACE]: found section point at line: {ctr}')
-							break
-				for i in range(point,len(lines)): # get anchor
-					anchor += 1
-					if not lines[i].strip().startswith(('#',';')) and len(lines[i].strip().split('[',1)) == 2:
-						if lines[i].strip().split('[',1)[1].split(']',1)[0]:
-							if self.trace_verbose >= 1: print(f'[iniparser2][TRACE]: found section anchor at line: {anchor}')
-							break
-				for i in range(point,anchor): # get section pointer
-					section_point += 1
-					if not (lines[i].strip().startswith('[') or lines[i].strip().startswith(('#',';'))) and len(lines[i].strip().split('=',1)) == 2:
-						if lines[i].strip().split('=',1)[0] == key:
-							if self.trace_verbose >= 1: print(f'[iniparser2][TRACE]: found property at line: {i}')
-							found = True
-							break
-			if found:
-				if self.trace_verbose >= 1: print(f'[iniparser2][TRACE]: found an existing property, update property value at line: {section_point}')
-				try:
-					lines[section_point] = f"{key}={value}{lines[section_point].strip().split('#',1)[1]}\r"
-				except: 
-					lines[section_point] = f"{key}={value}\r"
-				with open(self.filename,'w+') as f:
-					for l in lines:
-						f.write(l)
-					return True
-			elif not found:
-				if self.trace_verbose >= 1: print(f'[iniparser2][TRACE]: property not found, set new property at line: {section_point+1}')
-				lines.insert(section_point+1,f"{key}={value}\r")
-				with open(self.filename,'w+') as f:
-					for l in lines:
-						f.write(l)
-					return True
+			data = INI(self.filename,self.section).get()
+			if data == None: data = dict()
+			try:
+				data[self.section][key] = value
+			except KeyError:
+				from .err import SectionError
+				raise SectionError('No section found for %s' % self.section)
+			from .utils import dump; dump(self.filename,data)
+			return True
 
 	def sets(self,sets):
 		"""set or update properties with sets or dictionary"""
@@ -266,95 +166,38 @@ class INI:
 		"""check if property was set or not"""
 		key = str(key)
 		if self.pass_section:
-			if self.trace_verbose >= 1: print(f'[iniparser2][TRACE]: parse mode = pass_section:True')
-			found=False
-			with open(self.filename,'r') as f:
-				lines=f.readlines()
-				for l in lines:
-					if not l.strip().startswith(('#',';')) and len(l.strip().split('=',1)) == 2:
-						if l.strip().split('=',1)[0] == key:
-							found = True
-							break
-			return found
+			data = INI(self.filename,self.section).get()
+			if data == None: return False
+			if key in data:
+				if not isinstance(data[key], dict): return True
+				else: return False
+			else: return False
 		elif not self.pass_section:
-			if self.trace_verbose >= 1: print(f'[iniparser2][TRACE]: parse mode = pass_section:False')
-			found=False
-			with open(self.filename,'r') as f:
-				lines,ctr,point,anchor,found= f.readlines(),-1,0,0,False
-				for l in lines: # get point
-					ctr += 1
-					if not l.strip().startswith(('#',';')) and len(l.strip().split('[',1)) == 2:
-						if l.strip().split('[',1)[1].split(']',1)[0] == self.section:
-							point,anchor= ctr+1,ctr+1
-							if self.trace_verbose >= 1: print(f'[iniparser2][TRACE]: section point found at line: {point}')
-							break
-				for i in range(point,len(lines)): # get anchor
-					anchor += 1
-					if not l.strip().startswith(('#',';')) and len(lines[i].strip().split('[',1)) == 2:
-						if lines[i].strip().split('[',1)[1].split(']',1)[0]:
-							if self.trace_verbose >= 1: print(f'[iniparser2][TRACE]: section anchor found at line: {anchor}')
-							break
-				for i in range(point,anchor): # get section pointer
-					if not (lines[i].strip().startswith(('#',';')) or lines[i].strip().startswith('[')) and len(lines[i].strip().split('=',1)) == 2:
-						if lines[i].strip().split('=',1)[0] == key:
-							found = True
-							break
-			return found
+			data = INI(self.filename,self.section).get()
+			if data == None: return False
+			if key in data:
+				if INI(self.filename,self.section).isset_section():
+					if not isinstance(data[self.section][key], dict): return True
+					else: return False
+				else: return False
+			else: return False
 
 	def unset(self,key):
 		"""unset existing property by key"""
 		key = str(key)
 		if self.pass_section:
 			if self.trace_verbose >= 1: print(f'[iniparser2][TRACE]: parse mode = pass_section:True')
-			lines,ctr,found=list(),-1,False
-			with open(self.filename,'r') as f:
-				lines=f.readlines()
-				for l in lines:
-					ctr += 1
-					if not l.strip().startswith(('#',';')) and len(l.strip().split('=',1)) == 2:
-						if l.strip().split('=',1)[0] == key:
-							found = True
-							if self.trace_verbose >= 1: print(f'[iniparser2][TRACE]: found property at line: {ctr}')
-							break
-			if found: # update existing key's value
-				del lines[ctr]
-				with open(self.filename,'w+') as f:
-					for l in lines:
-						f.write(l)
-					INI(self.filename,self.section).delete_gap()
-					return True
+			if not INI(self.filename,self.section).isset(key): return False
+			data = INI(self.filename,self.section).get(); del data[key]
+			from .utils import dump; dump(self.filename,data)
+			return True
 
 		elif not self.pass_section:
 			if self.trace_verbose >= 1: print(f'[iniparser2][TRACE]: parse mode = pass_section:False')
-			lines,section_point,found=list(),0,False
-			with open(self.filename,'r') as f:
-				lines,ctr,point,anchor,found,section_point= f.readlines(),-1,0,0,False,0
-				for l in lines: # get point
-					ctr += 1
-					if not l.strip().startswith(('#',';')) and len(l.strip().split('[',1)) == 2:
-						if l.strip().split('[',1)[1].split(']',1)[0] == self.section:
-							point,anchor,section_point= ctr+1,ctr+1,ctr
-							if self.trace_verbose >= 1: print(f'[iniparser2][TRACE]: section point found at line: {point}')
-							break
-				for i in range(point,len(lines)): # get anchor
-					anchor += 1
-					if len(lines[i].strip().split('[',1)) == 2:
-						if lines[i].strip().split('[',1)[1].split(']',1)[0]:
-							if self.trace_verbose >= 1: print(f'[iniparser2][TRACE]: section anchor found at line: {anchor}')
-							break
-				for i in range(point,anchor): # get section pointer
-					section_point += 1
-					if not (lines[i].strip().startswith('[') or lines[i].strip().startswith('[')) and len(lines[i].strip().split('=',1)) == 2:
-						if lines[i].strip().split('=',1)[0] == key:
-							found = True
-							break
-			if found:
-				del lines[section_point]
-				with open(self.filename,'w+') as f:
-					for l in lines:
-						f.write(l)
-					INI(self.filename,self.section).delete_gap()
-					return True
+			if not INI(self.filename,self.section).isset(key): return False
+			data = INI(self.filename,self.section).get(); del data[self.section][key]
+			from .utils import dump; dump(self.filename,data)
+			return True
 
 	# utils
 
