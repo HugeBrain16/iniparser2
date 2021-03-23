@@ -13,7 +13,8 @@ this package is the improved version of [**iniparser**](https://github.com/HugeB
 ## Installation
 
 to install the package see the following step below
-
+  
+`pip install iniparser2` || `python -m pip install iniparser2`    
 from source: `python setup.py install`  
 
 ## Examples
