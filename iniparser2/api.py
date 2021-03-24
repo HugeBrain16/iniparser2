@@ -10,26 +10,7 @@ class INI:
 
 	def read(self):
 		"""read sections and properties"""
-		from .utils import parse_section,parse_property,is_section,is_property
-		ret = dict()
-		with open(self.filename,'r') as f:
-			lines,point,anchor,fsec=f.readlines(),0,0,False
-			for idx, line, in enumerate(lines):
-				if is_section(line.strip()) or fsec:
-					fsec=True; _section = parse_section(line.strip()); point,anchor=idx+1,idx+1
-					for i in range(anchor,len(lines)):
-						anchor += 1
-						if is_section(lines[i].strip()):
-							break
-					if _section: ret.update({_section: {}})
-					for i in range(point,anchor):
-						if is_property(lines[i].strip()):
-							key, val = parse_property(lines[i].strip())
-							if _section != None: ret[_section].update({key:val})
-				if not fsec:
-					if is_property(line.strip()):
-						key, val = parse_property(line.strip()); ret.update({key: val})
-			return ret
+		return parse(open(self.filename,'r').read())
 
 	def write(self,sets):
 		"""write properties and sections to file"""
@@ -40,10 +21,13 @@ class INI:
 def parse(string):
 	from .utils import parse_section,parse_property,is_section,is_property
 	import io
-	ret = dict(); lines,point,anchor,fsec=io.StringIO(string).readlines(),0,0,False
+	ret = dict()
+	lines,point,anchor,fsec=io.StringIO(string).readlines(),0,0,False
 	for idx, line, in enumerate(lines):
 		if is_section(line.strip()) or fsec:
-			fsec=True; _section = parse_section(line.strip()); point,anchor=idx+1,idx+1
+			fsec=True
+			_section = parse_section(line.strip())
+			point,anchor=idx+1,idx+1
 			for i in range(anchor,len(lines)):
 				anchor += 1
 				if is_section(lines[i].strip()):
