@@ -29,65 +29,48 @@ class INI:
 
 	def get(self):
 		"""get all keys and value by section"""
+		from .utils import parse_section,parse_property,is_section,is_property
+
 		ret = dict()
-		found=False
 		if not self.pass_section:
 			if self.trace_verbose >= 1: print(f'[iniparser2][TRACE]: parse mode = pass_section:False')
 			with open(self.filename,'r') as f:
-				lines,ctr,point,anchor= f.readlines(),-1,0,0
-				for l in lines: # get point
-					ctr += 1
-					if not l.strip().startswith(('#',';')) and len(l.strip().split('[',1)) == 2:
-						if l.strip().split('[',1)[1].split(']',1)[0] == self.section:
-							point,anchor,found = ctr+1,ctr+1,True
-							if self.trace_verbose >= 1: print(f'[iniparser2][TRACE]: Found `point` at line: {point}')
-							break
-				if point == 0 and self.trace_verbose == 1: print(f'[iniparser2][TRACE]: `point` found at line: {point} (DEFAULT)')
-				for i in range(point,len(lines)): # get anchor
+				lines,point,anchor = f.readlines(),0,0
+				for idx, line, in enumerate(lines):
+					if parse_section(line.strip()) == self.section:
+						point,anchor=idx+1,idx+1
+						break
+				for i in range(anchor,len(lines)):
 					anchor += 1
-					if not lines[i].strip().startswith((';','#')) and len(lines[i].strip().split('[',1)) == 2:
-						if lines[i].strip().split('[',1)[1].split(']',1)[0]:
-							if self.trace_verbose >= 1: print(f'[iniparser2][TRACE]: Found `anchor` at line: {anchor}')
-							break
-				for i in range(point,anchor): # get key and value
-					if lines[i].strip().startswith('[') or lines[i].strip().startswith((';','#')): continue
-					else:
-						if not lines[i].strip().startswith(('#',';')) and len(lines[i].strip().split('=',1)) == 2:
-							if self.trace_verbose == 2: print(f'[iniparser2][TRACE]: Found property at line: {i}')
-							ret.update({lines[i].strip().split('=',1)[0]: lines[i].strip().split('=',1)[1].split('#')[0]})
-			if found: return ret
+					if is_section(lines[i].strip()):
+						break
+				for i in range(point,anchor):
+					if is_property(lines[i].strip()):
+						key, val = parse_property(lines[i].strip())
+						ret.update({key: val})
+			return ret
 		elif self.pass_section:
 			if self.trace_verbose >= 1: print(f'[iniparser2][TRACE]: parse mode = pass_section:True')
 			with open(self.filename,'r') as f:
-				lines,ctr,point,anchor,found,key= f.readlines(),-1,0,0,False,None
-				for l in lines: # get key and value
-					ctr += 1
-					if l.strip().startswith('[') or found==True:
-						found=True
-						if not l.strip().startswith(('#',';')) and len(l.strip().split('[',1)) == 2:
-							if l.strip().split('[',1)[1].split(']',1)[0]:
-								key = l.strip().split('[',1)[1].split(']',1)[0]
-								point,anchor,found = ctr+1,ctr+1,True
-								if self.trace_verbose >= 1: print(f'[iniparser2][TRACE]: Found `point` at line: {point}')
-								for i in range(point,len(lines)): # get anchor
-									anchor += 1
-									if not lines[i].strip().startswith(('#',';')) and len(lines[i].strip().split('[',1)) == 2:
-										if lines[i].strip().split('[',1)[1].split(']',1)[0]:
-											if self.trace_verbose >= 1: print(f'[iniparser2][TRACE]: Found `anchor` at line: {anchor}')
-											break
-								ret.update({key:{}})
-								for i in range(point,anchor): # get key and value
-									if not lines[i].strip().startswith(('#',';')) and len(lines[i].strip().split('=',1)) == 2:
-										if self.trace_verbose == 2: print(f'[iniparser2][TRACE]: Found property at line: {i}')
-										if not key in ret:
-											ret.update({key:{}})
-											ret[key].update({lines[i].strip().split('=',1)[0]: lines[i].strip().split('=',1)[1].split('#',1)[0]})
-										else:
-											ret[key].update({lines[i].strip().split('=',1)[0]: lines[i].strip().split('=',1)[1].split('#',1)[0]})
-					if found == False:
-						if not l.strip().startswith(('#',';')) and len(l.strip().split('=',1)) == 2:
-							if self.trace_verbose == 2: print(f'[iniparser2][TRACE]: Found property at line: {ctr}')
-							ret.update({l.strip().split('=',1)[0]: l.strip().split('=',1)[1].split('#')[0]})
+				lines,point,anchor,fsec=f.readlines(),0,0,False
+				for idx, line, in enumerate(lines):
+					if is_section(line.strip()) or fsec:
+						fsec=True
+						_section = parse_section(line.strip())
+						point,anchor=idx+1,idx+1
+						for i in range(anchor,len(lines)):
+							anchor += 1
+							if is_section(lines[i].strip()):
+								break
+						if _section: ret.update({_section: {}})
+						for i in range(point,anchor):
+							if is_property(lines[i].strip()):
+								key, val = parse_property(lines[i].strip())
+								if _section != None: ret[_section].update({key:val})
+					if not fsec:
+						if is_property(line.strip()):
+							key, val = parse_property(line.strip())
+							ret.update({key: val})
 			return ret
 
 	def sections(self):
