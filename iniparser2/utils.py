@@ -1,5 +1,43 @@
 import re
 
+def exists(filename):
+	"""check whether the file is exists or not"""
+	import os
+	if os.path.exists(filename): return True
+	else: return False
+
+def create(filename):
+	"""creates new file"""
+	import os
+	if not os.path.exists(filename):
+		with open(filename,'x') as f:
+			pass
+		return True
+	else: return False
+
+def flush(filename,stream=False):
+	"""flush file"""
+	if not stream:
+		import os
+		if os.path.exists(filename):
+			os.remove(filename)
+			with open(filename,'x') as f:
+				pass
+			return True
+		else: return False
+	elif stream:
+		with open(filename,'w') as f:
+			f.write('')
+		return True
+
+def remove(filename):
+	"""remove/deletes file"""
+	import os
+	if os.path.exists(filename):
+		os.remove(filename)
+		return True
+	else: return False
+
 def dump(filename,set):
 	"""dump a dictionary or a set to INI file format"""
 	with open(filename,'w+') as f:
