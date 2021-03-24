@@ -6,7 +6,7 @@ def read(fname):
 
 setuptools.setup(
 name='iniparser2',
-version='1.8.1',
+version='1.8.2',
 author='HugeBrain16',
 author_email='joshtuck373@gmail.com',
 description='An INI parser or config parser',

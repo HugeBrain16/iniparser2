@@ -56,9 +56,9 @@ def parse_property(string):
 	if len(prop) < 3: return
 	del prop[1]
 	key, val = prop[0], prop[1]
-	_key = re.split(r'\s*[!?#;]',key)[0]
+	_key = re.split(r'\s*[!?#]',key)[0]
 	val = ''.join(prop[1:])
-	val = re.split(r'\s*[!?#;]',val)[0]
+	val = re.split(r'\s*[!?#]',val)[0]
 	if key == _key:
 		return key, val
 
@@ -68,9 +68,7 @@ def parse_section(string):
 	if sec[0] != string:
 		for i,s in enumerate(sec):
 			if not s: del sec[i]
-		_sec = re.split(r'\s*[!?#;]',sec[0])[0]
-		if _sec == sec[0]:
-			return sec[0]
+		return sec[0]
 
 def check_comment(string):
 	sec = re.match(r'^[?!#;]',string)
