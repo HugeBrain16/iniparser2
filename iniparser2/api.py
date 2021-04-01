@@ -30,15 +30,17 @@ class INI_BIN:
 
 	def read(self):
 		"""read sections and properties in binary format"""
-		import marshal
+		import marshal, io
 		data = marshal.load(open(self.filename,'rb')).decode('utf-8')
+		_data = io.StringIO(data).readlines()
+		if _data[0].strip() != "INI": return TypeError("Binary file is not an INI format")
 		return parse(data)
 
 	def write(self,sets):
 		"""write properties and sections to file in binary format"""
-		from .utils import dump; import marshal
+		from .utils import dump_bin; import marshal
 		if not isinstance(sets,dict): raise TypeError("INI properties must be a dict object")
-		dump(self.filename,sets)
+		dump_bin(self.filename,sets)
 		raw_data = open(self.filename,'r').read().encode('utf-8')
 		marshal.dump(raw_data,open(self.filename,'wb'))
 

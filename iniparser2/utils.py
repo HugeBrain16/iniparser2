@@ -50,6 +50,19 @@ def dump(filename,set):
 			else:
 				f.write(f"{ns}={set[ns]}\n")
 
+def dump_bin(filename,set):
+	"""dump a dictionary or a set to INI file format"""
+	with open(filename,'w+') as f:
+		f.write('INI\n') # ini format binary
+		for ns in set:
+			if isinstance(set[ns], dict):
+				f.write(f'[{ns}]\n')
+				for ps in set[ns]:
+					if isinstance(set[ns][ps], dict) or isinstance(set[ns][ps], list): continue
+					f.write(f'{ps}={set[ns][ps]}\n')
+			else:
+				f.write(f"{ns}={set[ns]}\n")
+
 def parse_property(string):
 	if check_comment(string): return
 	prop = re.split(r'\s*(\=)\s*',string)
