@@ -18,6 +18,30 @@ class INI:
 		if not isinstance(sets,dict): raise TypeError("INI properties must be a dict object")
 		dump(self.filename,sets); return True
 
+class INI_BIN:
+	def __init__(self, filename):
+		self.filename = str(filename)
+
+	def __enter__(self):
+		return INI_BIN(self.filename)
+
+	def __exit__(*args,**kwargs):
+		pass
+
+	def read(self):
+		"""read sections and properties in binary format"""
+		import marshal
+		data = marshal.load(open(self.filename,'rb')).decode('utf-8')
+		return parse(data)
+
+	def write(self,sets):
+		"""write properties and sections to file in binary format"""
+		from .utils import dump; import marshal
+		if not isinstance(sets,dict): raise TypeError("INI properties must be a dict object")
+		dump(self.filename,sets)
+		raw_data = open(self.filename,'r').read().encode('utf-8')
+		marshal.dump(raw_data,open(self.filename,'wb'))
+
 def parse(string):
 	from .utils import parse_section,parse_property,is_section,is_property
 	import io
