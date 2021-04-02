@@ -67,3 +67,20 @@ name = Mike Hawk
 x = iniparser2.parse(x)
 print(x)
 ```
+
+INI binary format
+
+```py
+import iniparser2
+
+ex_data = {
+    "slots": 20,
+    "name": "no"
+}
+
+x = iniparser2.INI_BIN('test.ini')
+x.write(ex_data)
+data = x.read()
+
+print(data)
+```
