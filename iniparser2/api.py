@@ -51,7 +51,7 @@ class INI_BIN:
 
 def parse(string):
 	"""beans for everyone, haha... :|"""
-	from .utils import parse_section,parse_property,is_section,is_property
+	from .utils import parse_section,parse_property,is_section,is_property,check_comment
 	import io
 	
 	ret = dict()
@@ -81,7 +81,7 @@ def parse(string):
 
 					if _section != None: ret[_section].update({key:val})
 				else:
-					raise ParsingError("error parsing property at line {lineno}".format(lineno=i+1))
+					if not check_comment(lines[i].strip()): raise ParsingError("error parsing property at line {lineno}".format(lineno=i+1))
 
 		if not fsec:
 			if is_property(line.strip()):
@@ -92,6 +92,6 @@ def parse(string):
 
 				ret.update({key: val})
 			else:
-				raise ParsingError("error parsing property at line {lineno}".format(lineno=idx+1))
+				if not check_comment(line.strip()): raise ParsingError("error parsing property at line {lineno}".format(lineno=idx+1))
 	
 	return ret
