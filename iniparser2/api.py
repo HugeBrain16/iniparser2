@@ -58,7 +58,7 @@ def parse(string):
 	lines,point,anchor,fsec=io.StringIO(string).readlines(),0,0,False
 
 	for idx, line, in enumerate(lines):
-		if line.strip() == 'INI': continue # skip INI file format for binary, i guess...
+		if line.strip() == 'INI' or not line.strip(): continue # skip INI file format for binary, i guess...
 
 		if is_section(line.strip()) or fsec:
 			fsec=True
