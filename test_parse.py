@@ -1,16 +1,31 @@
+# uhh... ¯\_(ツ)_/¯ -> i... don't... know...
+
 import iniparser2
 
 def test_parse():
-	file = "name=ahaha\nage=99"
+	file = '''
+	[E]
+	name = Josh Tucker
+	age = 14
+	'''
 	data = iniparser2.parse(file)
-	assert 'name' in list(data), "Parse Error"
+	assert 'E' in list(data), "Parse Error"
 
 def test_parse_comment():
-	file = '#name=ahaha\nage=1293'
+	file = '''
+	[check]
+	this = one
+	#not = this
+	'''
 	data = iniparser2.parse(file)
-	assert not 'name' in list(data), "Parse error"
+	assert not 'not' in list(data['check']), "Parse error"
 
 def test_parse_comment_section():
-	file = ';[data]'
+	file = '''
+	;[dont]
+	this = is
+	not = in
+	"dont" = section
+	'''
 	data = iniparser2.parse(file)
-	assert not 'data' in list(data), "Parse error"
+	assert not 'dont' in list(data), "Parse error"

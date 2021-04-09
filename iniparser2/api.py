@@ -73,6 +73,8 @@ def parse(string):
 			if _section: ret.update({_section: {}})
 			
 			for i in range(point,anchor):
+				if not lines[i].strip(): continue
+
 				if is_property(lines[i].strip()):
 					key, val = parse_property(lines[i].strip())
 
@@ -81,7 +83,9 @@ def parse(string):
 
 					if _section != None: ret[_section].update({key:val})
 				else:
-					if not check_comment(lines[i].strip()): raise ParsingError("error parsing property at line {lineno}".format(lineno=i+1))
+					if is_section(lines[i].strip()): continue
+
+					if lines[i].strip() and not check_comment(lines[i].strip()): raise ParsingError("error parsing property at line {lineno}".format(lineno=i+1))
 
 		if not fsec:
 			if is_property(line.strip()):
