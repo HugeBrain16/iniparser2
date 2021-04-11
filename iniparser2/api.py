@@ -13,9 +13,9 @@ class INI:
 	def __exit__(*args,**kwargs): #hmm...
 		pass
 
-	def read(self):
+	def read(self, eval=False):
 		"""read sections and properties"""
-		return parse(open(self.filename,'r').read())
+		return parse(open(self.filename,'r').read(),eval)
 
 	def write(self,sets):
 		"""write properties and sections to file"""
@@ -33,13 +33,14 @@ class INI_BIN:
 	def __exit__(*args,**kwargs): #hmm...
 		pass
 
-	def read(self):
+	def read(self,eval=False):
 		"""read sections and properties in binary format"""
 		import marshal, io
 		data = marshal.load(open(self.filename,'rb')).decode('utf-8')
 		_data = io.StringIO(data).readlines()
 		if _data[0].strip() != "INI": return TypeError("Binary file is not an INI format")
-		return parse(data)
+		
+		return parse(data,eval)
 
 	def write(self,sets):
 		"""write properties and sections to file in binary format"""
@@ -49,7 +50,7 @@ class INI_BIN:
 		raw_data = open(self.filename,'r').read().encode('utf-8')
 		marshal.dump(raw_data,open(self.filename,'wb'))
 
-def parse(string):
+def parse(string, eval=False):
 	"""beans for everyone, haha... :|"""
 	from .utils import parse_section,parse_property,is_section,is_property,check_comment
 	import io
@@ -98,4 +99,35 @@ def parse(string):
 			else:
 				if not check_comment(line.strip()): raise ParsingError("error parsing property at line {lineno}".format(lineno=idx+1))
 	
+	if eval == True: return _Eval(ret)
 	return ret
+
+def _Eval(INI_dict):
+	"""eval stuff i guess"""
+	import re
+
+	eval_code = [
+		(r'^[-+]?(\d*[.])\d*$',float),
+		(r'^[-+]?\d+$',int),
+		(r'^(True|False|None)$',eval),
+		(r'^\"(.*)\"$',eval)
+	]
+
+	for sectf in INI_dict:
+		if isinstance(INI_dict[sectf], dict):
+			for prop in INI_dict[sectf]:
+				for ev in eval_code:
+					if type(INI_dict[sectf][prop]).__name__ != 'str': continue
+
+					if re.match(ev[0],INI_dict[sectf][prop]):
+						INI_dict[sectf][prop] = ev[1](INI_dict[sectf][prop])
+						break
+		else:
+			for ev in eval_code:
+				if type(INI_dict[sectf]).__name__ != 'str': continue
+
+				if re.match(ev[0],INI_dict[sectf]):
+					INI_dict[sectf] = ev[1](INI_dict[sectf])
+					break
+
+	return INI_dict
