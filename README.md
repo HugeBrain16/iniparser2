@@ -86,7 +86,7 @@ print(data)
 ```
 
 eval parsing
-```
+```py
 import iniparser2
 
 file = '''
