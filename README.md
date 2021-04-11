@@ -84,7 +84,7 @@ data = x.read()
 
 print(data)
 ```
-  
+
 eval parsing
 ```
 import iniparser2
@@ -99,5 +99,5 @@ message = "beep boop sus"
 we = iniparser2.parse(file,eval=True)
 wte = iniparser2.parse(file)
 
-print(we + `\n` + wte)
+print(we + '\n' + wte)
 ```
