@@ -65,7 +65,7 @@ def dump_bin(filename,set):
 
 def parse_property(string):
 	if check_comment(string): return
-	prop = re.findall(r'^\s*(.*)\s*\=\s*(.*)$',string)
+	prop = re.findall(r'^\s*(.+?)\s*\=\s*(.+?)\s*$',string)
 	if len(prop[0]) < 2: return
 	key, val = prop[0][0], prop[0][1]
 	_key = re.match(r'^\s*(\#)|((.*)\s[#])',key)
