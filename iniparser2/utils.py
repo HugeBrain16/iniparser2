@@ -65,24 +65,22 @@ def dump_bin(filename,set):
 
 def parse_property(string):
 	if check_comment(string): return
-	prop = re.split(r'\s*(\=)\s*',string)
-	if len(prop) < 3: return
-	del prop[1]
-	key, val = prop[0], prop[1]
-	_key = re.split(r'(^[#])|((.*)\s[#]$)',key)[0]
-	val = ''.join(prop[1:])
+	prop = re.findall(r'^\s*(.*)\s*\=\s*(.*)$',string)
+	if len(prop[0]) < 2: return
+	key, val = prop[0][0], prop[0][1]
+	_key = re.match(r'^\s*(\#)|((.*)\s[#])',key)
+	if _key: return
 	val = re.split(r'((.)^[#]$)|\s([#])',val)[0]
-	if key == _key:
-		return key, val
+
+	return key, val
 
 def parse_section(string):
 	if check_comment(string): return
-	sec = re.split(r'^\s*\[(.*)\]|[#;]$',string)
-	if sec[0] != string:
-		for i,s in enumerate(sec):
-			if not s: del sec[i]
-		_sec = re.split(r'((.*)\s[#])',sec[0])[0]
-		if _sec: return _sec
+	sec = re.findall(r'^\s*\[(.*)\]\s*?(.*)$',string)
+	if not sec: return
+	if sec[0][1] and not re.match(r'^[#;]',sec[0][1]): return
+	_sec = re.match(r'(.*)\s[#]',sec[0][0])
+	if not _sec: return sec[0][0]
 
 def check_comment(string):
 	sec = re.match(r'^[#;]',string)
