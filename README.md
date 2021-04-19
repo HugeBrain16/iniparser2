@@ -1,103 +1,110 @@
 # iniparser2
-
+  
 [![Build Status](https://travis-ci.com/HugeBrain16/iniparser2.svg?branch=main)](https://travis-ci.com/HugeBrain16/iniparser2)  
-
+  
 **iniparser2** is An INI parser or a Config parser.  
-
-this package is the improved version of [**iniparser**](https://github.com/HugeBrain16/iniparser) with more features.
-
+  
+this package is the improved version of [**iniparser**](https://github.com/HugeBrain16/iniparser) (it's gone, but will be back soon...) with more features.
+  
 ---
-
-# Quick Start
-
+  
 ## Installation
-
-to install the package see the following step below
+- using pip
+    + from pypi
+        * `pip install iniparser2`
+        * `pip install iniparser2 --upgrade`
+    + from github repository
+        * `pip install git+https://github.com/HugeBrain16/iniparser2.git`
+    + from source
+        * `pip install .`
+- from source
+    + `python setup.py install`
+    + `python setup.py install --user`
   
-`pip install iniparser2` || `python -m pip install iniparser2`    
-from source: `python setup.py install`  
-
-## Examples  
-`test.ini`:
-```ini
-name = Mike Hawk
-```
-  
-`test.py`:  
-```py
-from iniparser2 import INI
-
-x = INI('test.ini')
-data = x.read()
-
-print(data)
-```
-  
-#### Output:
-```py
-{'name': 'Mike Hawk'}
-```
-  
-using `with` keyword  
-  
-`test.ini`:
-```ini
-name = Mike Hawk
-```
-  
-`test.py`:  
-```py
-from iniparser2 import INI
-
-with INI('test.ini') as i:
-    print(i.read())
-```
-#### Output:
-```py
-{'name': 'Mike Hawk'}
-```
-
-parse without file
+## Examples
+#### reading ini basic example  
 ```py
 import iniparser2
 
-x = """
-name = Mike Hawk
+string = """
+[stuff] # stuff that i stole from your house
+microwave = 2
+bagle = 8
+money = $2100
+person = 1
+something_else = 69
 """
-x = iniparser2.parse(x)
-print(x)
+
+parser = iniparser2.INI()
+parser.read(string)
+
+print(parser)
 ```
 
-INI binary format
-
+#### read-write example
+`something.ini`
+```ini
+[stuff] # stuff that i stole from your house
+microwave = 2
+bagle = 8
+money = $2100
+person = 1
+something_else = 69
+```
+  
+`le_main.py`
 ```py
 import iniparser2
 
-ex_data = {
-    "slots": 20,
-    "name": "no"
-}
+parser = iniparser2.INI(convert_property=True) # this `convert_property` does something like conversion...
 
-x = iniparser2.INI_BIN('test.ini')
-x.write(ex_data)
-data = x.read()
+parser.read_file('something.ini')
+print(parser) # old stuff
 
-print(data)
+# let's steal some more stuff
+parser.set('person', parser.get('person', section='stuff') + 1, section='stuff') # kidnap one more person from your house
+parser.set('bagle', parser.get('bagle', section='stuff') + 3, section='stuff') # and some bagles...
+parser.set('dog', 1, section='stuff') # ohh, there is a dog, imma take that
+parser.write('something.ini') # update file
+
+print(parser) # let's see what i got here..., ohh wait!-
+
+parser.remove_property('dog', section='stuff') # nevermind
+parser.write('something.ini') # alright let's get outta here
+
+# overread parser items
+parser.read_file('something.ini')
+print(parser) # new stuff
 ```
-
-eval parsing
+  
+#### weird binary file stuff
 ```py
 import iniparser2
 
-file = '''
-robot = True
-token = 32102
-amogus = -69.0
-message = "beep boop sus"
-'''
+string = """
+[robot-1]
+text = beep boop?
 
-we = iniparser2.parse(file,eval=True)
-wte = iniparser2.parse(file)
+[robot-2]
+text = boop? beep beep sus
 
-print(we,'\n',wte)
+[robot-3]
+text = amogus
+"""
+
+parser = iniparser2.INI()
+parser.write_string_bin('something.ini', string)
+parser.read_binfile('something.ini')
+
+print(parser)
 ```
+  
+### Exceptions
+exceptions because why not
+  
+- base exception
+    + `ParsingError`
+        * `SectionError`
+        * `PropertyError`
+- something else
+    + `DuplicateError`
