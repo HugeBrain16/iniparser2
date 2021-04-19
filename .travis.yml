@@ -7,7 +7,7 @@ python:
 install:
   - pip install -r requirements.txt
 script:
-  - pytest
-  - coverage run test_parse.py
+  - pytest tests.py
+  - coverage run tests.py
 after_success:
   - codecov
