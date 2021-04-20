@@ -4,7 +4,7 @@ import re
 import io
 from .lib import binlol
 
-__version__ = "2.0.0"
+__version__ = "2.0.1"
 
 
 class ParsingError(Exception):
@@ -120,7 +120,7 @@ class INI(object):
 
     def get(self, name, section=None):
         if section is None:
-            if not has_property(name):
+            if not self.has_property(name):
                 raise ValueError("property %s not found" % name)
 
             return self.ini[name]
