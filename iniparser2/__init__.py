@@ -4,7 +4,7 @@ import re
 import io
 from .lib import binlol
 
-__version__ = "2.0.2"
+__version__ = "2.0.3"
 
 
 class ParsingError(Exception):
