@@ -4,7 +4,7 @@ import re
 import io
 from .lib import binlol
 
-__version__ = "2.0.1"
+__version__ = "2.0.2"
 
 
 class ParsingError(Exception):
@@ -84,7 +84,11 @@ class INI(object):
 
     def read_binfile(self, filename):
         bin_data = binlol.load(filename)
-        self.ini = binlol.parse_bin_tree(bin_data)
+        self.ini = _parse(binlol.parse_bin_tree(bin_data), self.convert_property)
+        self._sections = []
+        for prop in self.ini:
+            if isinstance(self.ini[prop], dict):
+                self._sections.append(prop)
 
     def remove_section(self, name):
         if not self.has_section(name):
