@@ -84,7 +84,7 @@ class INI(object):
 
     def read_binfile(self, filename):
         bin_data = binlol.load(filename)
-        self.ini = _parse(binlol.parse_bin_tree(bin_data), self.convert_property)
+        self.ini = _parse(binlol.parse_bin_tree(bin_data), self.delimiter, self.convert_property)
         self._sections = []
         for prop in self.ini:
             if isinstance(self.ini[prop], dict):
