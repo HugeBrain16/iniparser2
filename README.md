@@ -22,17 +22,14 @@ this package is the improved version of [**iniparser**](https://github.com/HugeB
     + `python setup.py install --user`
   
 ## Examples
-#### reading ini basic example  
+#### read string
 ```py
 import iniparser2
 
 string = """
-[stuff] # stuff that i stole from your house
-microwave = 2
-bagle = 8
-money = $2100
-person = 1
-something_else = 69
+[me]
+name = josh
+age = 0
 """
 
 parser = iniparser2.INI()
@@ -40,65 +37,52 @@ parser.read(string)
 
 print(parser)
 ```
-
-#### read-write example
-`something.ini`
-```ini
-[stuff] # stuff that i stole from your house
-microwave = 2
-bagle = 8
-money = $2100
-person = 1
-something_else = 69
-```
   
-`le_main.py`
+#### using parser methods
 ```py
 import iniparser2
-
-parser = iniparser2.INI(convert_property=True) # this `convert_property` does something like conversion...
-
-parser.read_file('something.ini')
-print(parser) # old stuff
-
-# let's steal some more stuff
-parser.set('person', parser.get('person', section='stuff') + 1, section='stuff') # kidnap one more person from your house
-parser.set('bagle', parser.get('bagle', section='stuff') + 3, section='stuff') # and some bagles...
-parser.set('dog', 1, section='stuff') # ohh, there is a dog, imma take that
-parser.write('something.ini') # update file
-
-print(parser) # let's see what i got here..., ohh wait!-
-
-parser.remove_property('dog', section='stuff') # nevermind
-parser.write('something.ini') # alright let's get outta here
-
-# overread parser items
-parser.read_file('something.ini')
-print(parser) # new stuff
-```
-  
-#### weird binary file stuff
-```py
-import iniparser2
-
-string = """
-[robot-1]
-text = beep boop?
-
-[robot-2]
-text = boop? beep beep sus
-
-[robot-3]
-text = amogus
-"""
 
 parser = iniparser2.INI()
-parser.write_string_bin('something.ini', string)
-parser.read_binfile('something.ini')
+
+parser.set_section("me")
+parser.set("name", "josh", section="me")
+parser.set("age", 0, section="me")
+
+print(parser)
+```
+    
+#### read from file
+```py
+import iniparser2
+
+parser = iniparser2.INI()
+parser.read_file("filename.ini")
 
 print(parser)
 ```
   
+#### read-write file
+`file.ini`
+```ini
+car = 1
+bike = 1
+```
+  
+`main.py`
+```py
+import iniparser2
+
+parser = iniparser2.INI(convert_property=True)
+parser.read_file("file.ini")
+
+parser.set("car", parser.get("car") + 1)
+parser.remove_property("bike")
+
+parser.write("file.ini")
+parser.read_file("file.ini")
+
+print(parser)
+```
 ### Exceptions
 exceptions because why not
   
