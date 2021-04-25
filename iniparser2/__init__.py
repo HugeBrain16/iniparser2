@@ -4,7 +4,7 @@ import re
 import io
 from .lib import binlol
 
-__version__ = "2.0.3"
+__version__ = "2.1.0"
 
 
 class ParsingError(Exception):
@@ -20,15 +20,27 @@ class ParsingError(Exception):
         return f"{self.message}, {self.text} [line {self.line}]"
 
 
+class ParseDuplicateError(ParsingError):
+    """dupe error raised while parsing"""
+
+
+class PropertyError(Exception):
+    pass
+
+
 class DuplicateError(Exception):
-    """dupe error"""
+    pass
 
 
-class PropertyError(ParsingError):
+class SectionError(Exception):
+    pass
+
+
+class ParsePropertyError(ParsingError):
     """raised when failed parsing property"""
 
 
-class SectionError(ParsingError):
+class ParseSectionError(ParsingError):
     """raised when failed parsing section"""
 
 
@@ -54,7 +66,7 @@ class INI(object):
         return self.ini[key]
 
     def read(self, string):
-        self.ini = _parse(string, self.delimiter, self.convert_property)
+        self.ini = parse(string, self.delimiter, self.convert_property)
         self._sections = []
         for prop in self.ini:
             if isinstance(self.ini[prop], dict):
@@ -74,7 +86,7 @@ class INI(object):
 
     def read_file(self, filename):
         """read sections and properties"""
-        self.ini = _parse(
+        self.ini = parse(
             open(filename, "r").read(), self.delimiter, self.convert_property
         )
         self._sections = []
@@ -84,7 +96,9 @@ class INI(object):
 
     def read_binfile(self, filename):
         bin_data = binlol.load(filename)
-        self.ini = _parse(binlol.parse_bin_tree(bin_data), self.delimiter, self.convert_property)
+        self.ini = parse(
+            binlol.parse_bin_tree(bin_data), self.delimiter, self.convert_property
+        )
         self._sections = []
         for prop in self.ini:
             if isinstance(self.ini[prop], dict):
@@ -92,7 +106,7 @@ class INI(object):
 
     def remove_section(self, name):
         if not self.has_section(name):
-            raise ValueError("section %s not found" % name)
+            raise SectionError("section %s not found" % name)
 
         del self.ini[name]
         self._sections.remove(name)
@@ -100,15 +114,15 @@ class INI(object):
     def remove_property(self, name, section=None):
         if section is None:
             if not self.has_property(name):
-                raise ValueError("property %s not found" % name)
+                raise PropertyError("property %s not found" % name)
 
             del self.ini[name]
             return None
 
         if not self.has_section(section):
-            raise ValueError("section %s not found" % section)
+            raise SectionError("section %s not found" % section)
         if not self.has_property(name, section):
-            raise ValueError(f"property {name} not found in section {section}")
+            raise PropertyError(f"property {name} not found in section {section}")
 
         del self.ini[section][name]
 
@@ -118,21 +132,21 @@ class INI(object):
             return None
 
         if not self.has_section(section):
-            raise ValueError("section %s not found" % section)
+            raise SectionError("section %s not found" % section)
 
         self.ini[section].update({name: value})
 
     def get(self, name, section=None):
         if section is None:
             if not self.has_property(name):
-                raise ValueError("property %s not found" % name)
+                raise PropertyError("property %s not found" % name)
 
             return self.ini[name]
 
         if not self.has_section(section):
-            raise ValueError("section %s not found" % section)
+            raise SectionError("section %s not found" % section)
         if not self.has_property(name, section):
-            raise ValueError(f"property {name} not found in section {section}")
+            raise PropertyError(f"property {name} not found in section {section}")
 
         return self.ini[section][name]
 
@@ -157,71 +171,91 @@ class INI(object):
         dump_bin(filename, res)
 
 
-def _parse(string, delimiter, convert_property):
-    """beans for everyone, haha... :|"""
-    ret = dict()
-    lines, point, anchor, fsec = io.StringIO(string).readlines(), 0, 0, False
+def _parse(string):
+    """parse ini format string returns parse tree"""
+    lines = io.StringIO(string).readlines()
+    parse_tree = []
+    parse_tree.append([])
 
-    for (
-        idx,
-        line,
-    ) in enumerate(lines):
-        if not line.strip():
-            continue
+    parse_tree_point = 0
+    found_section = False
 
-        if is_section(line.strip()) or fsec:
-            fsec = True
-            _section = parse_section(line.strip())
-            point, anchor = idx + 1, idx + 1
+    for index, line in enumerate(lines):
+        if is_section(line.strip()):
+            parse_tree_point += 1
+            parse_tree.append([])
 
-            for i in range(anchor, len(lines)):
-                anchor += 1
-                if is_section(lines[i].strip()):
-                    break
+        parse_tree[parse_tree_point].append((index + 1, line))
 
-            if _section:
-                ret.update({_section: {}})
+    return parse_tree
 
-            for i in range(point, anchor):
-                if not lines[i].strip():
-                    continue
 
-                if is_property(lines[i].strip(), delimiter):
-                    key, val = parse_property(lines[i].strip(), delimiter)
+def parse(string, delimiter, convert_property):
+    """parse "parse tree" returns ini dictionary"""
+    result = {}
 
-                    if not key:
-                        raise PropertyError(
-                            "invalid property key name", lines[i].strip(), i + 1
-                        )
+    parse_tree = _parse(string)
 
-                    if _section is not None:
-                        ret[_section].update({key: val})
-                else:
-                    if is_section(lines[i].strip()):
-                        continue
+    prev_section = None
+    prev_property = None
+    prev_multiline_val = None
 
-                    if lines[i].strip() and not check_comment(lines[i].strip()):
-                        raise PropertyError(
-                            "error parsing property", lines[i].strip(), i + 1
-                        )
+    for chunks in parse_tree:
+        for line, chunk in chunks:
+            if not chunk.strip() and prev_multiline_val is None:
+                continue
 
-        if not fsec:
-            if is_property(line.strip(), delimiter):
-                key, val = parse_property(line.strip(), delimiter)
+            if is_section(chunk.strip()):
+                prev_section = parse_section(chunk.strip())
 
-                if not key:
-                    raise PropertyError(
-                        "invalid property key name", line.strip(), idx + 1
+                if prev_section in result:
+                    raise ParseDuplicateError(
+                        "section already exists", prev_section, line
                     )
 
-                ret.update({key: val})
-            else:
-                if not check_comment(line.strip()):
-                    raise PropertyError("error parsing property", line.strip(), idx + 1)
+                result.update({prev_section: {}})
 
-    if convert_property is True:
-        return _convert_property(ret)
-    return ret
+            elif is_property(chunk.strip(), delimiter):
+                key, val = parse_property(chunk.strip(), delimiter)
+
+                prev_property = key
+
+                if prev_section:
+                    if prev_property in result[prev_section]:
+                        raise ParseDuplicateError(
+                            "property already exists", prev_property, line
+                        )
+
+                    result[prev_section].update({key: val})
+                else:
+                    if prev_property in result:
+                        raise ParseDuplicateError(
+                            "property already exists", prev_property, line
+                        )
+
+                    result.update({key: val})
+
+            else:
+                if re.match(r"^\s", chunk):
+                    if prev_section:
+                        if prev_property:
+                            result[prev_section][prev_property] = result[prev_section][
+                                prev_property
+                            ] + ("\n" + chunk.strip())
+                            continue
+                    elif prev_section is None:
+                        if prev_property:
+                            result[prev_property] = result[prev_property] + (
+                                "\n" + chunk.strip()
+                            )
+                            continue
+
+                raise ParsePropertyError("error parsing property", chunk.strip(), line)
+
+    if convert_property:
+        return _convert_property(result)
+
+    return result
 
 
 def _convert_property(INI_dict):
@@ -242,7 +276,7 @@ def _convert_property(INI_dict):
                     if re.match(eval_code[0], INI_dict[sectf][prop]):
                         INI_dict[sectf][prop] = eval_code[1](INI_dict[sectf][prop])
                         break
-                
+
                 if type(INI_dict[sectf][prop]).__name__ != "str":
                     continue
 
