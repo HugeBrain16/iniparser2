@@ -167,7 +167,7 @@ class INI(object):
 
     def write_string_bin(self, filename, string):
         """write properties and sections to file in binary format from string"""
-        res = _parse(string, self.delimiter, self.convert_property)
+        res = parse(string, self.delimiter, self.convert_property)
         dump_bin(filename, res)
 
 
@@ -178,7 +178,6 @@ def _parse(string):
     parse_tree.append([])
 
     parse_tree_point = 0
-    found_section = False
 
     for index, line in enumerate(lines):
         if is_section(line.strip()):
