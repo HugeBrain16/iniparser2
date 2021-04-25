@@ -88,7 +88,10 @@ exceptions because why not
   
 - base exception
     + `ParsingError`
-        * `SectionError`
-        * `PropertyError`
+        * `ParseSectionError`
+        * `ParsePropertyError`
+        * `ParseDuplicateError`
 - something else
     + `DuplicateError`
+    + `PropertyError`
+    + `SectionError`
