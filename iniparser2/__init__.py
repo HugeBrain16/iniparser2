@@ -329,7 +329,7 @@ def parse_property(string, delimiter):
     """parse property returns property key and property value"""
     if check_comment(string):
         return None
-    prop = re.findall(rf"^\s*(.+?)\s*[{r'|'.join(delimiter)}]\s*(.+?)\s*$", string)
+    prop = re.findall(rf"^\s*(.+?)\s*[{r'|'.join(delimiter)}]\s*(.+?)?\s*$", string)
     if not prop:
         return None
     if len(prop[0]) < 2:
