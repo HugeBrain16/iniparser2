@@ -1,10 +1,10 @@
-"""mmm yes, docstring..."""
+"""An INI parser or a Config parser"""
 
 import re
 import io
 from .lib import binlol
 
-__version__ = "2.1.0"
+__version__ = "2.2.0"
 
 
 class ParsingError(Exception):
@@ -171,85 +171,80 @@ class INI(object):
         dump_bin(filename, res)
 
 
-def _parse(string):
-    """parse ini format string returns parse tree"""
-    lines = io.StringIO(string).readlines()
-    parse_tree = []
-    parse_tree.append([])
-
-    parse_tree_point = 0
-
-    for index, line in enumerate(lines):
-        if is_section(line.strip()):
-            parse_tree_point += 1
-            parse_tree.append([])
-
-        parse_tree[parse_tree_point].append((index + 1, line))
-
-    return parse_tree
-
-
 def parse(string, delimiter, convert_property):
-    """parse "parse tree" returns ini dictionary"""
+    """parse ini string returns ini dictionary"""
     result = {}
 
-    parse_tree = _parse(string)
+    lines = io.StringIO(string).readlines()
 
     prev_section = None
     prev_property = None
-    prev_multiline_val = None
 
-    for chunks in parse_tree:
-        for line, chunk in chunks:
-            if not chunk.strip() and prev_multiline_val is None:
-                continue
+    for lineno, line in enumerate(lines):
+        lineno += 1
 
-            if is_section(chunk.strip()):
-                prev_section = parse_section(chunk.strip())
+        if not line.strip():
+            continue
 
-                if prev_section in result:
+        if is_section(line.strip()):
+            prev_section = parse_section(line.strip())
+
+            if prev_section in result:
+                raise ParseDuplicateError(
+                    "section already exists", prev_section, lineno
+                )
+
+            result.update({prev_section: {}})
+
+        elif is_property(line.strip(), delimiter):
+            key, val = parse_property(line.strip(), delimiter)
+
+            prev_property = key
+
+            if prev_section:
+                if prev_property in result[prev_section]:
                     raise ParseDuplicateError(
-                        "section already exists", prev_section, line
+                        "property already exists", prev_property, lineno
                     )
 
-                result.update({prev_section: {}})
-
-            elif is_property(chunk.strip(), delimiter):
-                key, val = parse_property(chunk.strip(), delimiter)
-
-                prev_property = key
-
-                if prev_section:
-                    if prev_property in result[prev_section]:
-                        raise ParseDuplicateError(
-                            "property already exists", prev_property, line
-                        )
-
-                    result[prev_section].update({key: val})
-                else:
-                    if prev_property in result:
-                        raise ParseDuplicateError(
-                            "property already exists", prev_property, line
-                        )
-
-                    result.update({key: val})
-
+                result[prev_section].update({key: val})
             else:
-                if re.match(r"^\s", chunk):
-                    if prev_section:
-                        if prev_property:
-                            result[prev_section][prev_property] = result[prev_section][
-                                prev_property
-                            ] + ("\n" + chunk.strip())
-                            continue
-                    elif prev_section is None:
-                        if prev_property:
-                            result[prev_property] = result[prev_property] + (
-                                "\n" + chunk.strip()
-                            )
-                            continue
+                if prev_property in result:
+                    raise ParseDuplicateError(
+                        "property already exists", prev_property, lineno
+                    )
 
-                raise ParsePropertyError("error parsing property", chunk.strip(), line)
+                result.update({key: val})
+
+        else:  # allow value only property, the dict value set to True
+            if re.match(r"^\s", line):
+                if prev_section:
+                    if prev_property:
+                        result[prev_section][prev_property] = result[prev_section][
+                            prev_property
+                        ] + ("\n" + line.strip())
+                        continue
+                elif prev_section is None:
+                    if prev_property:
+                        result[prev_property] = result[prev_property] + (
+                            "\n" + line.strip()
+                        )
+                        continue
+
+            if prev_section:
+                if line.strip() in result[prev_section]:
+                    raise ParseDuplicateError(
+                        "property already exists", line.strip(), lineno
+                    )
+
+                result[prev_section].update({line.strip(): True})
+            else:
+                if line.strip() in result:
+                    raise ParseDuplicateError(
+                        "property already exists", line.strip(), lineno
+                    )
+
+                result.update({line.strip(): True})
 
     if convert_property:
         return _convert_property(result)
