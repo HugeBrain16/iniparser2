@@ -5,6 +5,7 @@ import io
 from .lib import binlol
 
 __version__ = "2.2.0"
+__all__ = ["ParsingError", "INI", "PropertyError", "DuplicateError", "SectionError"]
 
 
 class ParsingError(Exception):
