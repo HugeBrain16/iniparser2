@@ -68,6 +68,14 @@ class INI(object):
     def __setitem__(self, key, value):
         self.ini[key] = value
 
+    def __delitem__(self, key):
+        if key in self._sections and isinstance(self.ini[key], dict):
+            self._sections.remove(key)
+            del self.ini[key]
+
+        else:
+            del self.ini[key]
+
     def read(self, string):
         self.ini = parse(string, self.delimiter, self.convert_property)
         self._sections = []
