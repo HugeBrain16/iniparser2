@@ -1,15 +1,5 @@
 import setuptools
-import re
-
-def getversion(file="iniparser2/__init__.py"):
-    for line in open(file, "r").readlines():
-        res = re.findall(r"^\s*__version__\s*=(.*)", line.strip())
-        if res:
-            res = res[0].strip()
-            if res.startswith('"') and res.endswith('"'):
-                return res.replace('"', "")
-            elif res.startswith("'") and res.endswith("'"):
-                return res.replace('"', "")
+from iniparser2 import __version__ as version
 
 def read(fname):
 	with open(fname,'r') as f:
@@ -17,7 +7,7 @@ def read(fname):
 
 setuptools.setup(
 name='iniparser2',
-version=getversion(),
+version=version,
 author='HugeBrain16',
 author_email='joshtuck373@gmail.com',
 description='An INI parser or config parser',
