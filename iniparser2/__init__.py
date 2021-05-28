@@ -2,7 +2,6 @@
 
 import re
 import io
-from .lib import binlol
 
 __version__ = "2.2.0"
 __all__ = ["ParsingError", "INI", "PropertyError", "DuplicateError", "SectionError"]
@@ -293,21 +292,6 @@ def dump(filename, ini_dict):
                     file.write(f"{prop} = {ini_dict[sect][prop]}\n")
             else:
                 file.write(f"{sect} = {ini_dict[sect]}\n")
-
-
-def dump_bin(filename, ini_dict):
-    """dump a dictionary or a set to INI file format"""
-    file = list()
-    for sect in ini_dict:
-        if isinstance(ini_dict[sect], dict):
-            file.append(f"[{sect}]\n")
-            for prop in ini_dict[sect]:
-                file.append(f"{prop} = {ini_dict[sect][prop]}\n")
-        else:
-            file.append(f"{sect} = {ini_dict[sect]}\n")
-
-    bin_file = binlol.parse_string("".join(file))
-    binlol.dump(filename, bin_file, file_format="INI")
 
 
 def parse_property(string, delimiter):
