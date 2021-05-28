@@ -98,16 +98,6 @@ class INI(object):
             if isinstance(self.ini[prop], dict):
                 self._sections.append(prop)
 
-    def read_binfile(self, filename):
-        bin_data = binlol.load(filename)
-        self.ini = parse(
-            binlol.parse_bin_tree(bin_data), self.delimiter, self.convert_property
-        )
-        self._sections = []
-        for prop in self.ini:
-            if isinstance(self.ini[prop], dict):
-                self._sections.append(prop)
-
     def remove_section(self, name):
         if not self.has_section(name):
             raise SectionError("section %s not found" % name)
@@ -164,15 +154,6 @@ class INI(object):
     def write(self, filename):
         """write properties and sections to file"""
         dump(filename, self.ini)
-
-    def write_bin(self, filename):
-        """write properties and sections to file in binary format"""
-        dump_bin(filename, self.ini)
-
-    def write_string_bin(self, filename, string):
-        """write properties and sections to file in binary format from string"""
-        res = parse(string, self.delimiter, self.convert_property)
-        dump_bin(filename, res)
 
 
 def parse(string, delimiter, convert_property):
