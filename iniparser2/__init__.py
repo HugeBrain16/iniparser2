@@ -66,6 +66,9 @@ class INI(object):
     def __getitem__(self, key):
         return self.ini[key]
 
+    def __setitem__(self, key, value):
+        self.ini[key] = value
+
     def read(self, string):
         self.ini = parse(string, self.delimiter, self.convert_property)
         self._sections = []
