@@ -66,6 +66,13 @@ class INI(object):
         return self.ini[key]
 
     def __setitem__(self, key, value):
+        if type(value) not in [int, float, str, bool]:
+            raise ValueError("value must be a literal")
+
+        if key in self.ini:
+            if isinstance(self.ini[key], dict) and key in self._sections:
+                raise SectionError("Cannot assign values to section header")
+
         self.ini[key] = value
 
     def __delitem__(self, key):
