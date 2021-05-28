@@ -1,52 +1,76 @@
 """binary stuff lol"""
 
 
-__version__ = "1.1.0"
+__version__ = "1.2.0"
+
+NULL = "00"
+NULL_BLOCK = NULL + NULL
+EMPTY_LINE = ["0000" for _ in range(8)]
+EMPTY_LINE_PTR = r"\s*" + r"\s*".join(EMPTY_LINE) + r"\s*"
 
 
-class FileFormatError(Exception):
-    """raised when file format is invalid"""
+class BinLOLError(Exception):
+    """raised when error lol"""
 
 
 def parse_string(string):
     """parse string to binary tree"""
-    string_char = list(string.encode())
-    bin_tree = list()
+    hexblock = ""
+    result = []
 
-    for char in string_char:
-        cbin = hex(char)
-        bin_tree.append(cbin[2:])
+    for c in string.encode("UTF-8"):
+        if len(hexblock) < 4:
+            if len(hex(c)[2:]) == 1:
+                hexblock += "0" + hex(c)[2:]
+            elif len(hex(c)[2:]) == 2:
+                hexblock += hex(c)[2:]
 
-    return bin_tree
+        if len(hexblock) == 4:
+            result.append(hexblock)
+            hexblock = ""
+
+    if hexblock:
+        hexblock += NULL
+        result.append(hexblock)
+
+    return result
 
 
-def parse_bin_tree(bin_tree):
+def parse_bin_tree(bin_tree, stripnul=True):
     """parse binary tree of string to string"""
-    leaves = list()
+    result = ""
 
     for branch in bin_tree:
-        char = chr(int(branch, base=16))
-        leaves.append(char)
+        left = branch[:2]
+        right = branch[2:]
 
-    return "".join(leaves)
+        result += chr(int(left, base=16))
+        result += chr(int(right, base=16))
+
+    if stripnul:
+        return result.strip("\x00")
+    return result
 
 
-def dump(filename, bin_tree, chunk_size=8, file_format="BINLOL"):
+def dump(filename, bin_tree, file_format="BINLOL"):
     """dump bin tree to file"""
-    chunks = generate_chunk(bin_tree, chunk_size)
+    chunks = generate_chunk(bin_tree)
 
     with open(filename, "w+") as file:
-        file.write("\t".join(parse_string(file_format)) + "\n")  # file format
+        format_ = parse_string(file_format)
+        while len(format_) < 8:
+            format_.append(NULL_BLOCK)
+        file.write(" ".join(format_) + "\n")
         for chunk in chunks:
-            file.write("\t".join(chunk) + "\n")
+            file.write(" ".join(chunk) + "\n")
 
 
-def load(filename):
-    """load raw data in binary tree format from binary file"""
+# def load(filename):
+#     """load raw data in binary tree format from binary file"""
 
-    chunks = parse_bin_file(filename)
+#     chunks = parse_bin_file(filename)
 
-    return parse_chunks(chunks)
+#     return parse_chunks(chunks)
 
 
 def parse_bin_file(filename, file_format="BINLOL"):
@@ -54,15 +78,15 @@ def parse_bin_file(filename, file_format="BINLOL"):
     lines = open(filename, "r").readlines()
     chunks = list()
 
-    file_format = parse_bin_tree(lines[0].strip().split("\t"))
+    file_format = parse_bin_tree(lines[0].strip().split(" "))
     if file_format != file_format:
-        raise FileFormatError("Incorrect file format, File: %s" % filename)
+        raise BinLOLError("Incorrect file format, File: %s" % filename)
 
     del lines[0]  # deletes file format line
 
     for line in lines:
         line = line.strip()
-        chunk = line.split("\t")
+        chunk = line.split(" ")
 
         chunks.append(chunk)
 
@@ -80,23 +104,18 @@ def parse_chunks(chunks):
     return bin_tree
 
 
-def generate_chunk(bin_tree, chunk_size):
+def generate_chunk(bin_tree):
     """generate chunks from binary tree"""
-    chunk = list()
-    chunk.append([])
-
-    chunk_len = 0
-    chunk_point = 0
+    chunk = [[]]
 
     for branch in bin_tree:
-        if chunk_len >= chunk_size:
-            chunk_len = 0
-            chunk_point += 1
+        if len(chunk[len(chunk) - 1]) == 8:
             chunk.append([])
 
-        if chunk_len < chunk_size:
-            chunk_len += 1
+        else:
+            chunk[len(chunk) - 1].append(branch)
 
-            chunk[chunk_point].append(branch)
+    while len(chunk[len(chunk) - 1]) < 8:
+        chunk[len(chunk) - 1].append(NULL_BLOCK)
 
     return chunk
