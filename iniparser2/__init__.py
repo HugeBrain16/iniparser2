@@ -77,6 +77,9 @@ class INI:
     def __str__(self):
         return f"{self.ini}"
 
+    def __iter__(self):
+        yield from self.ini
+
     def __getitem__(self, key):
         return self.ini[key]
 
