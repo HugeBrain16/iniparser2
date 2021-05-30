@@ -4,7 +4,7 @@ import re
 import io
 import ast
 
-__version__ = "2.4.0"
+__version__ = "2.4.1"
 __all__ = ["ParsingError", "INI", "PropertyError", "DuplicateError", "SectionError"]
 
 
