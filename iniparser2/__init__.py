@@ -64,7 +64,7 @@ class INI:
         self._comment_pattern = re.compile(r"^[#;]")
 
         # converter patterns
-        self._float_pattern = re.compile(r"^[-+]?(\d*[.])\d*$")
+        self._float_pattern = re.compile(r"^[-+]?(\d+[.])\d+$")
         self._int_pattern = re.compile(r"^[-+]?\d+$")
         self._str_pattern = re.compile(r'".*?(?<!\\)(?:\\\\)*?"')
 
