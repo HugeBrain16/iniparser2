@@ -48,25 +48,26 @@ class ParseSectionError(ParsingError):
 class INI:
     """main class for parsing ini"""
 
+    # parser patterns
+    _key_pattern = re.compile(r"^\s*(\#)|((.*)\s[#])")
+    _val_pattern = re.compile(r"((.)^[#]$)|\s([#])")
+    _section_pattern = re.compile(r"^\s*\[(.*)\]\s*?(.*)$")
+    _comment_pattern = re.compile(r"^[#;]")
+
+    # converter patterns
+    _float_pattern = re.compile(r"^[-+]?(\d+[.])\d+$")
+    _int_pattern = re.compile(r"^[-+]?\d+$")
+    _str_pattern = re.compile(r'".*?(?<!\\)(?:\\\\)*?"')
+
     def __init__(self, delimiter=("=",), convert_property=False):
         self.ini = dict()
         self.delimiter = delimiter
         self.convert_property = convert_property
         self._sections = list()
 
-        # parser patterns
         self._property_pattern = re.compile(
             rf"^\s*(.+?)\s*[{r'|'.join(delimiter)}]\s*(.+?)?\s*$"
         )
-        self._key_pattern = re.compile(r"^\s*(\#)|((.*)\s[#])")
-        self._val_pattern = re.compile(r"((.)^[#]$)|\s([#])")
-        self._section_pattern = re.compile(r"^\s*\[(.*)\]\s*?(.*)$")
-        self._comment_pattern = re.compile(r"^[#;]")
-
-        # converter patterns
-        self._float_pattern = re.compile(r"^[-+]?(\d+[.])\d+$")
-        self._int_pattern = re.compile(r"^[-+]?\d+$")
-        self._str_pattern = re.compile(r'".*?(?<!\\)(?:\\\\)*?"')
 
     def __enter__(self):
         return self
