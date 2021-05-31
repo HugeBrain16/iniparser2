@@ -386,11 +386,26 @@ class INI:
 
 def dump(filename, ini_dict):
     """dump a dictionary or a set to INI file format"""
+    found_sect = False
+    found_prop = False
+
     with open(filename, "w+") as file:
         for sect in ini_dict:
             if isinstance(ini_dict[sect], dict):
-                file.write(f"[{sect}]\n")
+                if found_sect is False and found_prop is False:
+                    file.write(f"[{sect}]\n")
+                else:
+                    file.write(f"\n[{sect}]\n")
+                found_sect = True
                 for prop in ini_dict[sect]:
-                    file.write(f"{prop} = {ini_dict[sect][prop]}\n")
+                    found_prop = True
+                    if ini_dict[sect][prop] is not None:
+                        file.write(f"{prop} = {ini_dict[sect][prop]}\n")
+                    else:
+                        file.write(f"{prop}\n")
             else:
-                file.write(f"{sect} = {ini_dict[sect]}\n")
+                found_prop = True
+                if ini_dict[sect] is not None:
+                    file.write(f"{sect} = {ini_dict[sect]}\n")
+                else:
+                    file.write(f"{sect}\n")
