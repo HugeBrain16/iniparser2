@@ -248,6 +248,9 @@ class INI:
             if not line.strip():
                 continue
 
+            if self._check_comment(line.strip()):
+                continue
+
             if self._is_section(line.strip()):
                 prev_section = self._parse_section(line.strip())
 
@@ -282,14 +285,14 @@ class INI:
                 if re.match(r"^\s", line):
                     if prev_section:
                         if prev_property:
-                            result[prev_section][prev_property] = result[prev_section][
-                                prev_property
-                            ] + ("\n" + line.strip())
+                            result[prev_section][prev_property] += (
+                                "\n" + self._val_pattern.split(line.strip())[0]
+                            )
                             continue
                     elif prev_section is None:
                         if prev_property:
-                            result[prev_property] = result[prev_property] + (
-                                "\n" + line.strip()
+                            result[prev_property] += (
+                                "\n" + self._val_pattern.split(line.strip())[0]
                             )
                             continue
 
@@ -299,14 +302,16 @@ class INI:
                             "property already exists", line.strip(), lineno
                         )
 
-                    result[prev_section].update({line.strip(): True})
+                    result[prev_section].update(
+                        {self._val_pattern.split(line.strip())[0]: True}
+                    )
                 else:
                     if line.strip() in result:
                         raise ParseDuplicateError(
                             "property already exists", line.strip(), lineno
                         )
 
-                    result.update({line.strip(): True})
+                    result.update({self._val_pattern.split(line.strip())[0]: True})
 
         if self.convert_property:
             return self._convert_property(result)
