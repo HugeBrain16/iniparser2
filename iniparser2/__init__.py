@@ -264,19 +264,19 @@ class INI:
             elif self._is_property(line.strip()):
                 key, val = self._parse_property(line.strip())
 
-                prev_property = key
+                prev_property = (key, {"key_only": False})
 
                 if prev_section:
-                    if prev_property in result[prev_section]:
+                    if prev_property[0] in result[prev_section]:
                         raise ParseDuplicateError(
-                            "property already exists", prev_property, lineno
+                            "property already exists", prev_property[0], lineno
                         )
 
                     result[prev_section].update({key: val})
                 else:
-                    if prev_property in result:
+                    if prev_property[0] in result:
                         raise ParseDuplicateError(
-                            "property already exists", prev_property, lineno
+                            "property already exists", prev_property[0], lineno
                         )
 
                     result.update({key: val})
@@ -285,13 +285,27 @@ class INI:
                 if re.match(r"^\s", line):
                     if prev_section:
                         if prev_property:
-                            result[prev_section][prev_property] += (
+                            if prev_property[1]["key_only"] is True:
+                                raise ParsePropertyError(
+                                    "Multiline value is not supported for key only property",
+                                    prev_property[0],
+                                    lineno,
+                                )
+
+                            result[prev_section][prev_property[0]] += (
                                 "\n" + self._val_pattern.split(line.strip())[0]
                             )
                             continue
                     elif prev_section is None:
                         if prev_property:
-                            result[prev_property] += (
+                            if prev_property[1]["key_only"] is True:
+                                raise ParsePropertyError(
+                                    "Multiline value is not supported for key only property",
+                                    prev_property[0],
+                                    lineno,
+                                )
+
+                            result[prev_property[0]] += (
                                 "\n" + self._val_pattern.split(line.strip())[0]
                             )
                             continue
@@ -302,16 +316,20 @@ class INI:
                             "property already exists", line.strip(), lineno
                         )
 
-                    result[prev_section].update(
-                        {self._val_pattern.split(line.strip())[0]: True}
-                    )
+                    key = self._val_pattern.split(line.strip())[0]
+                    prev_property = (key, {"key_only": True})
+
+                    result[prev_section].update({key: True})
                 else:
                     if line.strip() in result:
                         raise ParseDuplicateError(
                             "property already exists", line.strip(), lineno
                         )
 
-                    result.update({self._val_pattern.split(line.strip())[0]: True})
+                    key = self._val_pattern.split(line.strip())[0]
+                    prev_property = (key, {"key_only": True})
+
+                    result.update({key: True})
 
         if self.convert_property:
             return self._convert_property(result)
