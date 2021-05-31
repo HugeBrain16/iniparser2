@@ -49,8 +49,8 @@ class INI:
     """main class for parsing ini"""
 
     # parser patterns
-    _key_pattern = re.compile(r"^\s*(\#)|((.*)\s[#])")
-    _val_pattern = re.compile(r"((.)^[#]$)|\s([#])")
+    _key_pattern = re.compile(r"^\s*(\#\;)|((.*)\s[#;])")
+    _val_pattern = re.compile(r"((.)^[#;]$)|\s([#;])")
     _section_pattern = re.compile(r"^\s*\[(.*)\]\s*?(.*)$")
     _comment_pattern = re.compile(r"^[#;]")
 
@@ -352,8 +352,12 @@ class INI:
                             continue
 
                         if eval_code[0].match(ini_dict[sectf][prop]):
-                            ini_dict[sectf][prop] = eval_code[1](ini_dict[sectf][prop])
-                            break
+                            try:
+                                ini_dict[sectf][prop] = eval_code[1](ini_dict[sectf][prop])
+                            except Exception:
+                                break
+                            else:
+                                break
 
                     if type(ini_dict[sectf][prop]).__name__ != "str":
                         continue
@@ -368,8 +372,12 @@ class INI:
                         continue
 
                     if eval_code[0].match(ini_dict[sectf]):
-                        ini_dict[sectf] = eval_code[1](ini_dict[sectf])
-                        break
+                        try:
+                            ini_dict[sectf] = eval_code[1](ini_dict[sectf])
+                        except Exception:
+                            break
+                        else:
+                            break
 
                 if type(ini_dict[sectf]).__name__ != "str":
                     continue
