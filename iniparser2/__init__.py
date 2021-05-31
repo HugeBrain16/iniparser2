@@ -272,14 +272,14 @@ class INI:
                             "property already exists", prev_property[0], lineno
                         )
 
-                    result[prev_section].update({key: val})
+                    result[prev_section].update({key: val.strip()})
                 else:
                     if prev_property[0] in result:
                         raise ParseDuplicateError(
                             "property already exists", prev_property[0], lineno
                         )
 
-                    result.update({key: val})
+                    result.update({key: val.strip()})
 
             else:  # allow value only property, the dict value set to True
                 if re.match(r"^\s", line):
