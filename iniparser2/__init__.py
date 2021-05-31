@@ -240,7 +240,7 @@ class INI:
         lines = io.StringIO(string).readlines()
 
         prev_section = None
-        prev_property = None
+        prev_property = (None, {'key_only': False})
 
         for lineno, line in enumerate(lines):
             lineno += 1
@@ -284,7 +284,7 @@ class INI:
             else:  # allow value only property, the dict value set to True
                 if re.match(r"^\s", line):
                     if prev_section:
-                        if prev_property:
+                        if prev_property[0]:
                             if prev_property[1]["key_only"] is True:
                                 raise ParsePropertyError(
                                     "Multiline value is not supported for key only property",
@@ -296,8 +296,8 @@ class INI:
                                 "\n" + self._val_pattern.split(line.strip())[0]
                             )
                             continue
-                    elif prev_section is None:
-                        if prev_property:
+                    else:
+                        if prev_property[0]:
                             if prev_property[1]["key_only"] is True:
                                 raise ParsePropertyError(
                                     "Multiline value is not supported for key only property",
