@@ -102,6 +102,12 @@ class INI:
         else:
             del self.ini[key]
 
+    def __contains__(self, item):
+        return item in self.ini
+
+    def __len__(self):
+        return len(self.ini)
+
     def read(self, string):
         self.ini = self._parse(string)
         self._sections = []
@@ -281,34 +287,22 @@ class INI:
 
                     result.update({key: val.strip()})
 
-            else:  # allow value only property, the dict value set to True
+            else:  # allow value only property, the dict value set to None
                 if re.match(r"^\s", line):
                     if prev_section:
                         if prev_property[0]:
-                            if prev_property[1]["key_only"] is True:
-                                raise ParsePropertyError(
-                                    "Multiline value is not supported for key only property",
-                                    prev_property[0],
-                                    lineno,
+                            if prev_property[1]["key_only"] is False:
+                                result[prev_section][prev_property[0]] += (
+                                    "\n" + self._val_pattern.split(line.strip())[0]
                                 )
-
-                            result[prev_section][prev_property[0]] += (
-                                "\n" + self._val_pattern.split(line.strip())[0]
-                            )
-                            continue
+                                continue
                     else:
                         if prev_property[0]:
-                            if prev_property[1]["key_only"] is True:
-                                raise ParsePropertyError(
-                                    "Multiline value is not supported for key only property",
-                                    prev_property[0],
-                                    lineno,
+                            if prev_property[1]["key_only"] is False:
+                                result[prev_property[0]] += (
+                                    "\n" + self._val_pattern.split(line.strip())[0]
                                 )
-
-                            result[prev_property[0]] += (
-                                "\n" + self._val_pattern.split(line.strip())[0]
-                            )
-                            continue
+                                continue
 
                 if prev_section:
                     if line.strip() in result[prev_section]:
@@ -319,7 +313,7 @@ class INI:
                     key = self._val_pattern.split(line.strip())[0]
                     prev_property = (key, {"key_only": True})
 
-                    result[prev_section].update({key: True})
+                    result[prev_section].update({key: None})
                 else:
                     if line.strip() in result:
                         raise ParseDuplicateError(
@@ -329,7 +323,7 @@ class INI:
                     key = self._val_pattern.split(line.strip())[0]
                     prev_property = (key, {"key_only": True})
 
-                    result.update({key: True})
+                    result.update({key: None})
 
         if self.convert_property:
             return self._convert_property(result)
