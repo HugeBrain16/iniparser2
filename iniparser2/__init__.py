@@ -531,13 +531,13 @@ def dump(file, ini_dict):
             for prop in ini_dict[sect]:
                 found_prop = True
                 if ini_dict[sect][prop] is not None:
-                    file.write(f"{prop} = {ini_dict[sect][prop]}\n")
+                    file.write(f"{prop} = " + "\n\t".join(ini_dict[sect][prop].split('\n')) + "\n")
                 else:
                     file.write(f"{prop}\n")
         else:
             found_prop = True
             if ini_dict[sect] is not None:
-                file.write(f"{sect} = {ini_dict[sect]}\n")
+                file.write(f"{sect} = " + "\n\t".join(ini_dict[sect].split('\n')) + "\n")
             else:
                 file.write(f"{sect}\n")
 
