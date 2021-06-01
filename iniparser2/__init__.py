@@ -11,7 +11,7 @@ __all__ = ["ParsingError", "INI", "PropertyError", "DuplicateError", "SectionErr
 class ParsingError(Exception):
     """base exception for parsing error"""
 
-    def __init__(self, message, text, line):
+    def __init__(self, message, line, text=""):
         self.message = message
         self.text = text
         self.line = line
@@ -51,13 +51,26 @@ class INI:
     # parser patterns
     _key_pattern = re.compile(r"^\s*(\#\;)|((.*)\s[#;])")
     _val_pattern = re.compile(r"((.)^[#;]$)|\s([#;])")
-    _section_pattern = re.compile(r"^\s*\[(.*)\]\s*?(.*)$")
+    _section_pattern = re.compile(r"^\s*\[(.*)\]\s*(.*)$")
+    _seccom_pattern = re.compile(r"(.*)\s[#;]")
     _comment_pattern = re.compile(r"^[#;]")
 
     # converter patterns
-    _float_pattern = re.compile(r"^[-+]?(\d+[.])\d+$")
-    _int_pattern = re.compile(r"^[-+]?\d+$")
-    _str_pattern = re.compile(r'".*?(?<!\\)(?:\\\\)*?"')
+    _float_pattern = re.compile(r"^[-]?(\d+[.])\d+$")
+    _int_pattern = re.compile(r"^[-]?\d+$")
+    _str_pattern = re.compile(r'".*(?<!\\)(?:\\\\)*"')
+
+    LITERAL_TYPES = (int, float, bool, str)
+    BOOL_STATES = {
+        "true": True,
+        "1": True,
+        "on": True,
+        "yes": True,
+        "false": False,
+        "0": False,
+        "off": False,
+        "no": False,
+    }
 
     def __init__(self, delimiter=("=",), convert_property=False):
         self.ini = dict()
@@ -66,7 +79,7 @@ class INI:
         self._sections = list()
 
         self._property_pattern = re.compile(
-            rf"^\s*(.+?)\s*[{r'|'.join(delimiter)}]\s*(.+?)?\s*$"
+            rf"^\s*(.*)\s*[{r'|'.join(delimiter)}]\s*(.*)\s*$"
         )
 
     def __enter__(self):
@@ -85,8 +98,8 @@ class INI:
         return self.ini[key]
 
     def __setitem__(self, key, value):
-        if type(value) not in [int, float, str, bool]:
-            raise ValueError("value must be a literal")
+        if type(value) not in self.LITERAL_TYPES and value is not None:
+            raise ValueError("value must be a literal or NoneType")
 
         if key in self.ini:
             if isinstance(self.ini[key], dict) and key in self._sections:
@@ -101,6 +114,39 @@ class INI:
 
         else:
             del self.ini[key]
+
+    def update(self, dict_):
+        if not isinstance(dict_, dict):
+            raise TypeError("value must be a dict")
+
+        for sect in dict_:
+            if sect in self._sections and type(dict_[sect]) is not dict:
+                raise SectionError(f"Cannot update section header value [{sect}]")
+
+            if isinstance(dict_[sect], dict):
+                if sect not in self._sections:
+                    self._sections.append(sect)
+                    self.ini.update({sect: {}})
+
+                for opt in dict_[sect]:
+                    if (
+                        type(dict_[sect][opt]) not in self.LITERAL_TYPES
+                        and dict_[sect][opt] is not None
+                    ):
+                        raise PropertyError(
+                            f"value must be a literal or NoneType [{sect}][{opt}]"
+                        )
+
+                    self.ini[sect].update({opt: dict_[sect][opt]})
+
+            else:
+                if (
+                    type(dict_[sect]) not in self.LITERAL_TYPES
+                    and dict_[sect] is not None
+                ):
+                    raise PropertyError(f"value must be a literal or NoneType [{sect}]")
+
+                self.ini.update({sect: dict_[sect]})
 
     def __contains__(self, item):
         return item in self.ini
@@ -127,9 +173,13 @@ class INI:
 
         return name in self.ini[section]
 
-    def read_file(self, filename):
+    def read_file(self, file):
         """read sections and properties"""
-        self.ini = self._parse(open(filename, "r").read())
+        if type(file) is str:
+            # file path in string
+            self.ini = self._parse(open(file, "r").read())
+        elif type(file) is io.TextIOWrapper:
+            self.ini = self._parse(file.read())
         self._sections = []
         for prop in self.ini:
             if isinstance(self.ini[prop], dict):
@@ -179,6 +229,68 @@ class INI:
 
         return self.ini[section][name]
 
+    def get_str(self, name, section=None):
+        return str(self.get(name, section))
+
+    def get_int(self, name, section=None):
+        val = self.get(name, section)
+        if isinstance(val, int):
+            return val
+
+        return int(val)
+
+    def get_float(self, name, section=None):
+        val = self.get(name, section)
+        if isinstance(val, float):
+            return val
+
+        return float(val)
+
+    def get_bool(self, name, section=None):
+        val = self.get(name, section)
+
+        if isinstance(val, bool):
+            return val
+
+        val = val.lower()
+
+        if val not in self.BOOL_STATES:
+            raise TypeError("unknown bool state for: %s" % (val))
+
+        return self.BOOL_STATES[val]
+
+    def items(self, section=None):
+        result = []
+
+        if section is None:
+            for key in self.ini:
+                if not isinstance(self.ini[key], dict):
+                    result.append((key, self.ini[key]))
+        else:
+            if not self.has_section(section):
+                raise SectionError("section %s not found" % section)
+
+            for key in self.ini[section]:
+                if self.ini[section][key] is not None:
+                    result.append((key, self.ini[section][key]))
+
+        return result
+
+    def keys(self, section=None):
+        result = []
+
+        if section is None:
+            for key in self.ini:
+                result.append(key)
+        else:
+            if not self.has_section(section):
+                raise SectionError("section %s not found" % section)
+
+            for key in self.ini[section]:
+                result.append(key)
+
+        return result
+
     def set_section(self, name):
         if self.has_section(name):
             raise DuplicateError("section %s already exists" % name)
@@ -186,9 +298,9 @@ class INI:
         self.ini.update({name: {}})
         self._sections.append(name)
 
-    def write(self, filename):
+    def write(self, file):
         """write properties and sections to file"""
-        dump(filename, self.ini)
+        dump(file, self.ini)
 
     def _check_comment(self, string):
         """check comment"""
@@ -229,7 +341,7 @@ class INI:
             return None
         if sec[0][1] and not self._comment_pattern.match(sec[0][1].strip()):
             return None
-        _sec = re.match(r"(.*)\s[#]", sec[0][0])
+        _sec = self._seccom_pattern.match(sec[0][0])
         if not _sec:
             return sec[0][0]
 
@@ -243,10 +355,13 @@ class INI:
         """parse ini string returns ini dictionary"""
         result = {}
 
-        lines = io.StringIO(string).readlines()
+        if type(string) is str:
+            lines = io.StringIO(string).readlines()
+        elif type(string) is io.StringIO:
+            lines = string.readlines()
 
         prev_section = None
-        prev_property = (None, {'key_only': False})
+        prev_property = (None, {"key_only": False})
 
         for lineno, line in enumerate(lines):
             lineno += 1
@@ -260,9 +375,14 @@ class INI:
             if self._is_section(line.strip()):
                 prev_section = self._parse_section(line.strip())
 
+                if not prev_section:
+                    raise ParseSectionError(
+                        "section header does not have a name", lineno, line.strip()
+                    )
+
                 if prev_section in result:
                     raise ParseDuplicateError(
-                        "section already exists", prev_section, lineno
+                        "section already exists", lineno, prev_section
                     )
 
                 result.update({prev_section: {}})
@@ -270,22 +390,27 @@ class INI:
             elif self._is_property(line.strip()):
                 key, val = self._parse_property(line.strip())
 
+                if not key:
+                    raise ParsePropertyError(
+                        "property does not have a key name", lineno, line.strip()
+                    )
+
                 prev_property = (key, {"key_only": False})
 
                 if prev_section:
                     if prev_property[0] in result[prev_section]:
                         raise ParseDuplicateError(
-                            "property already exists", prev_property[0], lineno
+                            "property already exists", lineno, prev_property[0]
                         )
 
-                    result[prev_section].update({key: val.strip()})
+                    result[prev_section].update({key.strip(): val.strip()})
                 else:
                     if prev_property[0] in result:
                         raise ParseDuplicateError(
-                            "property already exists", prev_property[0], lineno
+                            "property already exists", lineno, prev_property[0]
                         )
 
-                    result.update({key: val.strip()})
+                    result.update({key.strip(): val.strip()})
 
             else:  # allow value only property, the dict value set to None
                 if re.match(r"^\s", line):
@@ -307,7 +432,7 @@ class INI:
                 if prev_section:
                     if line.strip() in result[prev_section]:
                         raise ParseDuplicateError(
-                            "property already exists", line.strip(), lineno
+                            "property already exists", lineno, line.strip()
                         )
 
                     key = self._val_pattern.split(line.strip())[0]
@@ -317,9 +442,8 @@ class INI:
                 else:
                     if line.strip() in result:
                         raise ParseDuplicateError(
-                            "property already exists", line.strip(), lineno
+                            "property already exists", lineno, line.strip()
                         )
-
                     key = self._val_pattern.split(line.strip())[0]
                     prev_property = (key, {"key_only": True})
 
@@ -347,7 +471,9 @@ class INI:
 
                         if eval_code[0].match(ini_dict[sectf][prop]):
                             try:
-                                ini_dict[sectf][prop] = eval_code[1](ini_dict[sectf][prop])
+                                ini_dict[sectf][prop] = eval_code[1](
+                                    ini_dict[sectf][prop]
+                                )
                             except Exception:
                                 break
                             else:
@@ -384,28 +510,35 @@ class INI:
         return ini_dict
 
 
-def dump(filename, ini_dict):
+def dump(file, ini_dict):
     """dump a dictionary or a set to INI file format"""
     found_sect = False
     found_prop = False
 
-    with open(filename, "w+") as file:
-        for sect in ini_dict:
-            if isinstance(ini_dict[sect], dict):
-                if found_sect is False and found_prop is False:
-                    file.write(f"[{sect}]\n")
-                else:
-                    file.write(f"\n[{sect}]\n")
-                found_sect = True
-                for prop in ini_dict[sect]:
-                    found_prop = True
-                    if ini_dict[sect][prop] is not None:
-                        file.write(f"{prop} = {ini_dict[sect][prop]}\n")
-                    else:
-                        file.write(f"{prop}\n")
+    if type(file) is str:
+        # file path in string
+        file = open(file, "w")
+    elif type(file) is not io.TextIOWrapper:
+        raise IOError("file must be either file path in string or file pointer")
+
+    for sect in ini_dict:
+        if isinstance(ini_dict[sect], dict):
+            if found_sect is False and found_prop is False:
+                file.write(f"[{sect}]\n")
             else:
+                file.write(f"\n[{sect}]\n")
+            found_sect = True
+            for prop in ini_dict[sect]:
                 found_prop = True
-                if ini_dict[sect] is not None:
-                    file.write(f"{sect} = {ini_dict[sect]}\n")
+                if ini_dict[sect][prop] is not None:
+                    file.write(f"{prop} = {ini_dict[sect][prop]}\n")
                 else:
-                    file.write(f"{sect}\n")
+                    file.write(f"{prop}\n")
+        else:
+            found_prop = True
+            if ini_dict[sect] is not None:
+                file.write(f"{sect} = {ini_dict[sect]}\n")
+            else:
+                file.write(f"{sect}\n")
+
+    file.close()
