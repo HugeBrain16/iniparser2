@@ -4,7 +4,7 @@ import re
 import io
 import ast
 
-__version__ = "2.6.0"
+__version__ = "2.6.1"
 __all__ = ["ParsingError", "INI", "PropertyError", "DuplicateError", "SectionError"]
 
 
@@ -395,7 +395,7 @@ class INI:
                         "property does not have a key name", lineno, line.strip()
                     )
 
-                prev_property = (key, {"key_only": False})
+                prev_property = (key.strip(), {"key_only": False})
 
                 if prev_section:
                     if prev_property[0] in result[prev_section]:
