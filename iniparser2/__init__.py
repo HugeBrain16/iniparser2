@@ -361,7 +361,6 @@ class INI:
                 continue
 
             section = self._parse_section(line.strip())
-            property_ = self._parse_property(line.strip())
 
             if section:
                 prev_section = section
@@ -377,8 +376,11 @@ class INI:
                     )
 
                 result.update({prev_section: {}})
+                continue
 
-            elif property_:
+            property_ = self._parse_property(line.strip())
+
+            if property_:
                 key, val = property_
 
                 if not key:
