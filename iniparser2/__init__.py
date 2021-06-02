@@ -80,7 +80,7 @@ class INI:
         inline_comments: Optional[bool] = True,
     ):
         """
-        Arguments:
+        Parameters:
             - delimiters:
                 property delimiters
             - convert_property:
