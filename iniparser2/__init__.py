@@ -8,7 +8,7 @@ from typing import Union
 from typing import Optional
 from typing import Any
 
-__version__ = "2.7.1"
+__version__ = "2.8.0"
 __all__ = ["ParsingError", "INI", "PropertyError", "DuplicateError", "SectionError"]
 
 
@@ -119,7 +119,7 @@ class INI:
     def __getitem__(self, key: str):
         return self.ini[key]
 
-    def __setitem__(self, key: str, value: Union[int, str, bool, float]):
+    def __setitem__(self, key: str, value: Union[int, str, bool, float, None]):
         if type(value) not in self.LITERAL_TYPES and value is not None:
             raise ValueError("value must be a literal or NoneType")
 
@@ -233,7 +233,10 @@ class INI:
             del self.ini[section][name]
 
     def set(
-        self, name: str, value: Optional[str] = "", section: Optional[str] = None
+        self,
+        name: str,
+        value: Union[str, int, float, bool, None] = None,
+        section: Optional[str] = None,
     ) -> None:
         """set new property or update existing property value in a section or global"""
         if section is None:
