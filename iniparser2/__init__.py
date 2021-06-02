@@ -4,6 +4,10 @@ import re
 import io
 import ast
 
+from typing import Union
+from typing import Optional
+from typing import Any
+
 __version__ = "2.7.1"
 __all__ = ["ParsingError", "INI", "PropertyError", "DuplicateError", "SectionError"]
 
@@ -11,7 +15,7 @@ __all__ = ["ParsingError", "INI", "PropertyError", "DuplicateError", "SectionErr
 class ParsingError(Exception):
     """base exception for parsing error"""
 
-    def __init__(self, message, line, text=""):
+    def __init__(self, message: str, line: int, text: Optional[str] = ""):
         self.message = message
         self.text = text
         self.line = line
@@ -49,15 +53,11 @@ class INI:
     """main class for parsing ini"""
 
     # parser patterns
-    _key_pattern = re.compile(r"^\s*(\#\;)|((.*)\s[#;])")
-    _val_pattern = re.compile(r"((.)^[#;]$)|\s([#;])")
-    _section_pattern = re.compile(r"^\s*\[(.*)\]\s*(.*)$")
-    _seccom_pattern = re.compile(r"(.*)\s[#;]")
-    _comment_pattern = re.compile(r"^[#;]")
+    _section_pattern = re.compile(r"^\s*\[(?P<header>.*)\]\s*(?P<rest>.*)$")
 
     # converter patterns
-    _float_pattern = re.compile(r"^[-]?(\d+[.])\d+$")
-    _int_pattern = re.compile(r"^[-]?\d+$")
+    _float_pattern = re.compile(r"^[-+]?(\d+[.])\d+$")
+    _int_pattern = re.compile(r"^[-+]?\d+$")
     _str_pattern = re.compile(r'".*(?<!\\)(?:\\\\)*"')
 
     LITERAL_TYPES = (int, float, bool, str)
@@ -72,14 +72,36 @@ class INI:
         "no": False,
     }
 
-    def __init__(self, delimiter=("=",), convert_property=False):
+    def __init__(
+        self,
+        delimiters: Optional[tuple] = ("=", ":"),
+        comment_prefix: Optional[tuple] = (";", "#"),
+        convert_property: Optional[bool] = False,
+        inline_comments: Optional[bool] = True,
+    ):
+        """
+        Arguments:
+            - delimiters:
+                property delimiters
+            - convert_property:
+                convert property value into specific data types
+            - inline_comments:
+                strip inline comments
+        """
         self.ini = dict()
-        self.delimiter = delimiter
+        self.delimiters = delimiters
+        self.comment_prefix = comment_prefix
         self.convert_property = convert_property
+        self.inline_comments = inline_comments
         self._sections = list()
 
+        self._incom_pattern = re.compile(fr".*\s[{''.join(comment_prefix)}]")
+        self._val_pattern = re.compile(
+            fr".^[{''.join(comment_prefix)}]|\s[{''.join(comment_prefix)}]"
+        )
+
         self._property_pattern = re.compile(
-            rf"^\s*(.*)\s*[{r'|'.join(delimiter)}]\s*(.*)\s*$"
+            rf"^\s*(?P<key>.*)\s*[{''.join(delimiters)}]\s*(?P<value>.*)\s*$"
         )
 
     def __enter__(self):
@@ -94,10 +116,10 @@ class INI:
     def __iter__(self):
         yield from self.ini
 
-    def __getitem__(self, key):
+    def __getitem__(self, key: str):
         return self.ini[key]
 
-    def __setitem__(self, key, value):
+    def __setitem__(self, key: str, value: Union[int, str, bool, float]):
         if type(value) not in self.LITERAL_TYPES and value is not None:
             raise ValueError("value must be a literal or NoneType")
 
@@ -107,7 +129,7 @@ class INI:
 
         self.ini[key] = value
 
-    def __delitem__(self, key):
+    def __delitem__(self, key: str):
         if key in self._sections and isinstance(self.ini[key], dict):
             self._sections.remove(key)
             del self.ini[key]
@@ -115,7 +137,7 @@ class INI:
         else:
             del self.ini[key]
 
-    def update(self, dict_):
+    def update(self, dict_: dict):
         if not isinstance(dict_, dict):
             raise TypeError("value must be a dict")
 
@@ -148,32 +170,36 @@ class INI:
 
                 self.ini.update({sect: dict_[sect]})
 
-    def __contains__(self, item):
+    def __contains__(self, item: str):
         return item in self.ini
 
     def __len__(self):
         return len(self.ini)
 
-    def read(self, string):
+    def read(self, string: str) -> None:
+        """read ini from string"""
         self.ini = self._parse(string)
         self._sections = []
         for prop in self.ini:
             if isinstance(self.ini[prop], dict):
                 self._sections.append(prop)
 
-    def sections(self):
+    def sections(self) -> list:
+        """returns section headers"""
         return self._sections
 
-    def has_section(self, name):
+    def has_section(self, name: str) -> bool:
+        """check if section is exists"""
         return name in self._sections
 
-    def has_property(self, name, section=None):
+    def has_property(self, name: str, section: Optional[str] = None) -> bool:
+        """check if property is exists in a section or global"""
         if section is None:
             return name in self.ini
 
         return name in self.ini[section]
 
-    def read_file(self, file):
+    def read_file(self, file: Union[io.TextIOWrapper, str]) -> None:
         """read sections and properties"""
         if type(file) is str:
             # file path in string
@@ -185,14 +211,14 @@ class INI:
             if isinstance(self.ini[prop], dict):
                 self._sections.append(prop)
 
-    def remove_section(self, name):
+    def remove_section(self, name: str) -> None:
         if not self.has_section(name):
             raise SectionError("section %s not found" % name)
 
         del self.ini[name]
         self._sections.remove(name)
 
-    def remove_property(self, name, section=None):
+    def remove_property(self, name: str, section: Optional[str] = None) -> None:
         if section is None:
             if not self.has_property(name):
                 raise PropertyError("property %s not found" % name)
@@ -206,7 +232,10 @@ class INI:
 
             del self.ini[section][name]
 
-    def set(self, name, value="", section=None):
+    def set(
+        self, name: str, value: Optional[str] = "", section: Optional[str] = None
+    ) -> None:
+        """set new property or update existing property value in a section or global"""
         if section is None:
             self.ini.update({name: value})
         else:
@@ -215,7 +244,8 @@ class INI:
 
             self.ini[section].update({name: value})
 
-    def get(self, name, section=None):
+    def get(self, name: str, section: Optional[str] = None) -> Any:
+        """get property value from a section or global"""
         if section is None:
             if not self.has_property(name):
                 raise PropertyError("property %s not found" % name)
@@ -229,24 +259,28 @@ class INI:
 
         return self.ini[section][name]
 
-    def get_str(self, name, section=None):
+    def get_str(self, name: str, section: Optional[str] = None) -> str:
+        """get property value in `str` type"""
         return str(self.get(name, section))
 
-    def get_int(self, name, section=None):
+    def get_int(self, name: str, section: Optional[str] = None) -> int:
+        """get property value in `int` type"""
         val = self.get(name, section)
         if isinstance(val, int):
             return val
 
         return int(val)
 
-    def get_float(self, name, section=None):
+    def get_float(self, name: str, section: Optional[str] = None) -> float:
+        """get property value in `float` type"""
         val = self.get(name, section)
         if isinstance(val, float):
             return val
 
         return float(val)
 
-    def get_bool(self, name, section=None):
+    def get_bool(self, name: str, section: Optional[str] = None) -> bool:
+        """get property value in `bool` type"""
         val = self.get(name, section)
 
         if isinstance(val, bool):
@@ -259,7 +293,7 @@ class INI:
 
         return self.BOOL_STATES[val]
 
-    def items(self, section=None):
+    def items(self, section: Optional[str] = None):
         result = []
 
         if section is None:
@@ -276,7 +310,7 @@ class INI:
 
         return result
 
-    def keys(self, section=None):
+    def keys(self, section: Optional[str] = None):
         result = []
 
         if section is None:
@@ -291,55 +325,43 @@ class INI:
 
         return result
 
-    def set_section(self, name):
+    def set_section(self, name: str) -> None:
         if self.has_section(name):
             raise DuplicateError("section %s already exists" % name)
 
         self.ini.update({name: {}})
         self._sections.append(name)
 
-    def write(self, file):
+    def write(self, file: Union[io.TextIOWrapper, str]) -> None:
         """write properties and sections to file"""
         dump(file, self.ini)
 
-    def _check_comment(self, string):
-        """check comment"""
-        sec = self._comment_pattern.match(string)
-        if sec:
-            return True
-        return False
-
-    def _parse_property(self, string):
+    def _parse_property(self, string: str) -> tuple:
         """parse property returns property key and property value"""
-        if self._check_comment(string):
-            return None
-        prop = self._property_pattern.findall(string)
-        if not prop:
-            return None
-        if len(prop[0]) < 2:
-            return None
-        key, val = prop[0][0], prop[0][1]
-        _key = self._key_pattern.match(key)
-        if _key:
-            return None
-        val = self._val_pattern.split(val)[0]
+        prop = self._property_pattern.match(string)
+        if prop:
+            key, val = prop.group("key", "value")
+            if self.inline_comments is False:
+                return key, val
 
-        return key, val
+            if not self._incom_pattern.match(key):
+                return key, self._val_pattern.split(val)[0]
 
-    def _parse_section(self, string):
+    def _parse_section(self, string: str) -> str:
         """parse section returns section name"""
-        if self._check_comment(string):
-            return None
-        sec = self._section_pattern.findall(string)
-        if not sec:
-            return None
-        if sec[0][1] and not self._comment_pattern.match(sec[0][1].strip()):
-            return None
-        _sec = self._seccom_pattern.match(sec[0][0])
-        if not _sec:
-            return sec[0][0]
+        sec = self._section_pattern.match(string)
+        if sec:
+            header, rest = sec.group("header", "rest")
+            if rest.strip():
+                if rest.strip().startswith(
+                    self.comment_prefix
+                ) and not self._incom_pattern.match(header):
+                    return header
+            else:
+                if not self._incom_pattern.match(header):
+                    return header
 
-    def _parse(self, string):
+    def _parse(self, string: Union[io.StringIO, str]) -> dict:
         """parse ini string returns ini dictionary"""
         result = {}
 
@@ -354,10 +376,7 @@ class INI:
         for lineno, line in enumerate(lines):
             lineno += 1
 
-            if not line.strip():
-                continue
-
-            if self._check_comment(line.strip()):
+            if line.strip().startswith(self.comment_prefix) or not line.strip():
                 continue
 
             section = self._parse_section(line.strip())
@@ -407,13 +426,12 @@ class INI:
 
             else:  # allow value only property, the dict value set to None
                 if re.match(r"^\s", line):
-                    if prev_section:
-                        if prev_property[0]:
-                            if prev_property[1]["key_only"] is False:
-                                result[prev_section][prev_property[0]] += (
-                                    "\n" + self._val_pattern.split(line.strip())[0]
-                                )
-                                continue
+                    if prev_section and prev_property[0]:
+                        if prev_property[1]["key_only"] is False:
+                            result[prev_section][prev_property[0]] += (
+                                "\n" + self._val_pattern.split(line.strip())[0]
+                            )
+                            continue
                     else:
                         if prev_property[0]:
                             if prev_property[1]["key_only"] is False:
@@ -447,7 +465,7 @@ class INI:
 
         return result
 
-    def _convert_property(self, ini_dict):
+    def _convert_property(self, ini_dict: dict) -> dict:
         """converter"""
         eval_codes = [
             (self._float_pattern, float),
@@ -459,9 +477,6 @@ class INI:
             if isinstance(ini_dict[sectf], dict):
                 for prop in ini_dict[sectf]:
                     for eval_code in eval_codes:
-                        if type(ini_dict[sectf][prop]).__name__ != "str":
-                            continue
-
                         if eval_code[0].match(ini_dict[sectf][prop]):
                             try:
                                 ini_dict[sectf][prop] = eval_code[1](
@@ -481,9 +496,6 @@ class INI:
                         ini_dict[sectf][prop] = False
             else:
                 for eval_code in eval_codes:
-                    if type(ini_dict[sectf]).__name__ != "str":
-                        continue
-
                     if eval_code[0].match(ini_dict[sectf]):
                         try:
                             ini_dict[sectf] = eval_code[1](ini_dict[sectf])
@@ -503,7 +515,7 @@ class INI:
         return ini_dict
 
 
-def dump(file, ini_dict):
+def dump(file: Union[io.TextIOWrapper, str], ini_dict: dict) -> None:
     """dump a dictionary or a set to INI file format"""
     found_sect = False
     found_prop = False
@@ -524,13 +536,19 @@ def dump(file, ini_dict):
             for prop in ini_dict[sect]:
                 found_prop = True
                 if ini_dict[sect][prop] is not None:
-                    file.write(f"{prop} = " + "\n\t".join(ini_dict[sect][prop].split('\n')) + "\n")
+                    file.write(
+                        f"{prop} = "
+                        + "\n\t".join(ini_dict[sect][prop].split("\n"))
+                        + "\n"
+                    )
                 else:
                     file.write(f"{prop}\n")
         else:
             found_prop = True
             if ini_dict[sect] is not None:
-                file.write(f"{sect} = " + "\n\t".join(ini_dict[sect].split('\n')) + "\n")
+                file.write(
+                    f"{sect} = " + "\n\t".join(ini_dict[sect].split("\n")) + "\n"
+                )
             else:
                 file.write(f"{sect}\n")
 
