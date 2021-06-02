@@ -4,7 +4,7 @@ import re
 import io
 import ast
 
-__version__ = "2.7.0"
+__version__ = "2.7.1"
 __all__ = ["ParsingError", "INI", "PropertyError", "DuplicateError", "SectionError"]
 
 
@@ -326,12 +326,6 @@ class INI:
 
         return key, val
 
-    def _is_property(self, string):
-        """check property"""
-        if self._parse_property(string) is not None:
-            return True
-        return False
-
     def _parse_section(self, string):
         """parse section returns section name"""
         if self._check_comment(string):
@@ -344,12 +338,6 @@ class INI:
         _sec = self._seccom_pattern.match(sec[0][0])
         if not _sec:
             return sec[0][0]
-
-    def _is_section(self, string):
-        """check section"""
-        if self._parse_section(string) is not None:
-            return True
-        return False
 
     def _parse(self, string):
         """parse ini string returns ini dictionary"""
@@ -372,8 +360,11 @@ class INI:
             if self._check_comment(line.strip()):
                 continue
 
-            if self._is_section(line.strip()):
-                prev_section = self._parse_section(line.strip())
+            section = self._parse_section(line.strip())
+            property_ = self._parse_property(line.strip())
+
+            if section:
+                prev_section = section
 
                 if not prev_section:
                     raise ParseSectionError(
@@ -387,8 +378,8 @@ class INI:
 
                 result.update({prev_section: {}})
 
-            elif self._is_property(line.strip()):
-                key, val = self._parse_property(line.strip())
+            elif property_:
+                key, val = property_
 
                 if not key:
                     raise ParsePropertyError(
