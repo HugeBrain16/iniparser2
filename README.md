@@ -4,7 +4,7 @@
   
 **iniparser2** is An INI parser or a Config parser.  
   
-this package is the improved version of [**iniparser**](https://github.com/HugeBrain16/iniparser) (it's gone, but will be back soon...) with more features.
+this package is the improved version of [**iniparser**](https://github.com/HugeBrain16/iniparser) with more features.
   
 ---
   
