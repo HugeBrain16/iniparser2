@@ -541,7 +541,7 @@ def dump(file: Union[io.TextIOWrapper, str], ini_dict: dict) -> None:
                 if ini_dict[sect][prop] is not None:
                     file.write(
                         f"{prop} = "
-                        + "\n\t".join(ini_dict[sect][prop].split("\n"))
+                        + "\n\t".join(str(ini_dict[sect][prop]).split("\n"))
                         + "\n"
                     )
                 else:
@@ -550,7 +550,7 @@ def dump(file: Union[io.TextIOWrapper, str], ini_dict: dict) -> None:
             found_prop = True
             if ini_dict[sect] is not None:
                 file.write(
-                    f"{sect} = " + "\n\t".join(ini_dict[sect].split("\n")) + "\n"
+                    f"{sect} = " + "\n\t".join(str(ini_dict[sect]).split("\n")) + "\n"
                 )
             else:
                 file.write(f"{sect}\n")
