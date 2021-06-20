@@ -8,7 +8,7 @@ from typing import Union
 from typing import Optional
 from typing import Any
 
-__version__ = "2.8.0"
+__version__ = "2.9.0"
 __all__ = ["ParsingError", "INI", "PropertyError", "DuplicateError", "SectionError"]
 
 
